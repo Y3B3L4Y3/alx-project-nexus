@@ -1,8 +1,9 @@
 
-# **🛒Agora E-Commerce Product Catalog **
+# **🛒Agora: E-Commerce Product Catalog **
+
 
 A fully responsive, scalable, and performance-optimized **E-Commerce Product Catalog** built using **React, TypeScript, Redux Toolkit, and RTK Query**.
-This project showcases real-world front-end engineering skills including component architecture, API integration, global state management, reusable UI patterns, debounced search, product filtering, and a functional cart system.
+This project showcases real-world front-end engineering skills including component architecture, API integration, global state management, reusable UI patterns, debounced search, product filtering, and a functional cart system . and the name 'Agora' The Greek word agora means "an assembly of the people," from a root meaning "to gather." Definitions of agora. noun. the marketplace in ancient Greece..
 
 ---
 
