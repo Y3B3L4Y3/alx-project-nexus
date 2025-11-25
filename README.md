@@ -1,5 +1,5 @@
 
-# **🛒 E-Commerce Product Catalog — Modern Frontend Project**
+# **🛒Agora E-Commerce Product Catalog — Modern Frontend Project**
 
 A fully responsive, scalable, and performance-optimized **E-Commerce Product Catalog** built using **React, TypeScript, Redux Toolkit, and RTK Query**.
 This project showcases real-world front-end engineering skills including component architecture, API integration, global state management, reusable UI patterns, debounced search, product filtering, and a functional cart system.
