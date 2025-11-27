@@ -1,0 +1,129 @@
+---
+alwaysApply: false
+---
+# ----------------------------------------------------
+# Agora E-Commerce Catalog — Cursor Project Rules
+# ----------------------------------------------------
+
+# ===== 1. Coding Standards =====
+- Always generate code using:
+  - React 18
+  - TypeScript
+  - Tailwind CSS
+  - React Router v6+
+- All components must be functional components.
+- Use Hooks instead of class components.
+- All files must use .tsx extension for components.
+- Keep components clean, readable, and modular.
+
+# ===== 2. Folder Structure Rules =====
+Follow the exact structure below:
+
+src/
+  api/
+    apiSlice.ts
+  components/
+    common/
+      Button.tsx
+      LoadingSpinner.tsx
+    layout/
+      Header.tsx
+      Footer.tsx
+    product/
+      ProductCard.tsx
+      FilterBar.tsx
+  hooks/
+    useDebounce.ts
+  pages/
+    Home.tsx
+    ProductDetail.tsx
+    Cart.tsx
+  redux/
+    store.ts
+    slices/
+      productSlice.ts
+      cartSlice.ts
+  types/
+    index.ts
+  utils/
+    currency.ts
+  App.tsx
+  index.tsx
+
+- Cursor must never create new folders not listed above unless I request it.
+- If a file belongs to a category, place it inside the correct folder.
+
+# ===== 3. State Management Rules =====
+- Use Redux Toolkit for global state.
+- Use RTK Query for API calls instead of axios.
+- Product data and Cart data MUST be handled through slices.
+
+# ===== 4. UI/UX Development Rules =====
+- Follow modern Tailwind utility classes.
+- Spacing must follow 4px scale (p-2, p-4, p-6...).
+- Use consistent colors and shadows.
+- IMPORTANT: All UI must match the provided Figma design.
+- If a UI element exists in Figma, reproduce it exactly using Tailwind.
+
+# ===== 5. Routing Rules =====
+- Use React Router DOM v6.
+- Create routes for:
+  /               → Home
+  /product/:id    → ProductDetail
+  /cart           → Cart
+
+# ===== 6. API Communication Rules =====
+- All API endpoints must go in api/apiSlice.ts
+- Use createApi + fetchBaseQuery
+- No inline fetch() inside components.
+
+# ===== 7. Typography & Layout Rules =====
+- Use Tailwind responsive breakpoints:
+  sm / md / lg / xl / 2xl
+- Follow mobile-first design.
+- Use consistent typography from Figma:
+  - Bold titles
+  - Medium subtitles
+  - Normal body text
+
+# ===== 8. Component Human-Style Rules =====
+- Code must feel like written by a skilled human developer.
+- Keep variable names meaningful.
+- Add comments where needed for clarity.
+- No unnecessary complexity.
+- Maintain clean indentation and file organization.
+
+# ===== 9. Generation Rules =====
+- When I ask for a component, generate:
+  1. The `.tsx` file content
+  2. Tailwind-friendly HTML
+  3. Types if needed
+  4. Place it in the correct folder
+- NEVER include placeholder text like:
+  "Add your code here"
+
+# ===== 10. Figma Integration Rules =====
+- Always follow the layout, spacing, colors, and structure shown in the Figma file:
+  https://www.figma.com/design/tTCmmnG8xBZUhCDjODJJjs/Full-E-Commerce-Website-UI-UX-Design--Community-?node-id=1-3
+
+- All UI components MUST visually match Figma unless I request changes.
+
+# ===== 11. Error Handling Rules =====
+- Handle loading states with LoadingSpinner.tsx
+- Handle errors with human-like messages using Tailwind alerts.
+
+# ===== 12. Reusability Rules =====
+- Do NOT duplicate code.
+- Move repeated logic into:
+  - /components/common
+  - /utils
+  - /hooks
+
+# ===== 13. Quality Rules =====
+- Code must compile with zero TypeScript errors.
+- Tailwind classes must be valid.
+- React Router must be configured properly.
+
+# ===== 14. Commitment Rules =====
+- Always follow these rules unless I explicitly say: "ignore rules".
+- Respond as an expert senior developer.
