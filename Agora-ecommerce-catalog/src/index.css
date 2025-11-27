@@ -93,6 +93,37 @@ body {
   animation-delay: 400ms;
 }
 
+/* Modal animations */
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes modalExit {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+}
+
+.animate-modal-enter {
+  animation: modalEnter 0.2s ease-out forwards;
+}
+
+.animate-modal-exit {
+  animation: modalExit 0.15s ease-in forwards;
+}
+
 /* Smooth scrolling for all elements */
 html {
   scroll-behavior: smooth;

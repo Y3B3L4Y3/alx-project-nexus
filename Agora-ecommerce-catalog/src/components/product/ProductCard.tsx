@@ -1,6 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { addToCart } from '../../redux/slices/cartSlice';
+import { toggleWishlist } from '../../redux/slices/wishlistSlice';
+import type { RootState } from '../../redux/store';
 
 interface ProductCardProps {
+  id?: number;
   title: string;
   price: number;
   originalPrice?: number;
@@ -9,30 +15,83 @@ interface ProductCardProps {
   rating: number;
   reviews: number;
   isNew?: boolean;
+  showTrashIcon?: boolean;
+  onRemove?: () => void;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ title, price, originalPrice, discount, image, rating, reviews, isNew = false }) => {
-  const [isWishlisted, setIsWishlisted] = useState(false);
-  const [showQuickView, setShowQuickView] = useState(false);
+const ProductCard: React.FC<ProductCardProps> = ({ 
+  id,
+  title, 
+  price, 
+  originalPrice, 
+  discount, 
+  image, 
+  rating, 
+  reviews, 
+  isNew = false,
+  showTrashIcon = false,
+  onRemove
+}) => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-  const handleAddToCart = () => {
-    alert(`Added "${title}" to cart!`);
+  // Simple stable hash for fallback numeric id if not provided
+  const fallbackId = React.useMemo(() => {
+    let hash = 0;
+    const str = `${title}-${price}`;
+    for (let i = 0; i < str.length; i++) hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    return Math.abs(hash) || Date.now();
+  }, [title, price]);
+
+  const productId = id ?? fallbackId;
+
+  // Check if product is in wishlist from Redux state
+  const isInWishlist = useSelector((state: RootState) => 
+    state.wishlist.items.some(item => item.id === productId)
+  );
+
+  // Fallback image if none provided
+  const productImage = image || '/vite.svg';
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    dispatch(addToCart({ id: productId, title, price, image: productImage }));
   };
 
-  const handleWishlist = () => {
-    setIsWishlisted(!isWishlisted);
-    alert(isWishlisted ? `Removed "${title}" from wishlist` : `Added "${title}" to wishlist!`);
+  const handleWishlist = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    dispatch(toggleWishlist({ 
+      id: productId, 
+      title, 
+      price, 
+      image: productImage,
+      originalPrice,
+      discount,
+      rating,
+      reviews
+    }));
   };
 
-  const handleQuickView = () => {
-    alert(`Quick view for "${title}"`);
+  const handleRemove = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onRemove) {
+      onRemove();
+    }
+  };
+
+  const handleQuickView = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Navigate to product detail page
+    navigate(`/product/${productId}`);
   };
 
   const handleProductClick = () => {
-    alert(`Navigating to "${title}" details page...`);
+    // Navigate to product detail page
+    navigate(`/product/${productId}`);
   };
+
   const renderStars = (rating: number) => {
-    const stars = [];
+    const stars = [] as React.ReactNode[];
     for (let i = 0; i < 5; i++) {
       stars.push(
         <svg key={i} className={`w-5 h-5 ${i < rating ? 'fill-[#FFAD33]' : 'fill-gray-300'}`} viewBox="0 0 20 20">
@@ -45,7 +104,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ title, price, originalPrice, 
 
   return (
     <div className="group flex flex-col gap-4 w-[270px] transform hover:scale-105 transition-all duration-300">
-      <div className="relative bg-secondary rounded h-[250px] flex items-center justify-center overflow-hidden cursor-pointer shadow-md hover:shadow-xl transition-shadow">
+      <div 
+        className="relative bg-secondary rounded h-[250px] flex items-center justify-center overflow-hidden cursor-pointer shadow-md hover:shadow-xl transition-shadow"
+        onClick={handleProductClick}
+      >
         {discount && (
           <div className="absolute top-3 left-3 bg-secondary-2 text-text px-3 py-1 rounded text-xs font-poppins z-10 animate-pulse">
             -{discount}%
@@ -57,43 +119,56 @@ const ProductCard: React.FC<ProductCardProps> = ({ title, price, originalPrice, 
           </div>
         )}
         
-        {/* Wishlist and Quick View Icons */}
+        {/* Wishlist / Remove / Quick View */}
         <div className="absolute top-3 right-3 flex flex-col gap-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <button 
-            onClick={(e) => { e.stopPropagation(); handleWishlist(); }}
-            className={`w-[34px] h-[34px] rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-110 shadow-lg ${
-              isWishlisted 
-                ? 'bg-secondary-2 text-white' 
-                : 'bg-white hover:bg-secondary-2 hover:text-white'
-            }`}
-            title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-          >
-            <svg className="w-5 h-5" fill={isWishlisted ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
-          </button>
-          <button 
-            onClick={(e) => { e.stopPropagation(); handleQuickView(); }}
-            className="w-[34px] h-[34px] bg-white rounded-full flex items-center justify-center hover:bg-secondary-2 hover:text-white transition-all duration-300 transform hover:scale-110 shadow-lg"
-            title="Quick view"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
-          </button>
+          {showTrashIcon ? (
+            <button 
+              onClick={handleRemove}
+              className="w-[34px] h-[34px] bg-white rounded-full flex items-center justify-center hover:bg-secondary-2 hover:text-white transition-colors shadow-lg"
+              title="Remove from wishlist"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          ) : (
+            <button 
+              onClick={handleWishlist}
+              className={`w-[34px] h-[34px] rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-110 shadow-lg ${
+                isInWishlist 
+                  ? 'bg-secondary-2 text-white' 
+                  : 'bg-white hover:bg-secondary-2 hover:text-white'
+              }`}
+              title={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
+            >
+              <svg className="w-5 h-5" fill={isInWishlist ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </button>
+          )}
+          {!showTrashIcon && (
+            <button 
+              onClick={handleQuickView}
+              className="w-[34px] h-[34px] bg-white rounded-full flex items-center justify-center hover:bg-secondary-2 hover:text-white transition-all duration-300 transform hover:scale-110 shadow-lg"
+              title="View product"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
+          )}
         </div>
 
         <img 
-          src={image} 
+          src={productImage} 
           alt={title} 
-          onClick={handleProductClick}
           className="max-h-[180px] max-w-[190px] object-contain transform group-hover:scale-110 transition-transform duration-300" 
         />
         
         {/* Add to Cart on Hover */}
         <button 
-          onClick={(e) => { e.stopPropagation(); handleAddToCart(); }}
+          onClick={handleAddToCart}
           className="absolute bottom-0 left-0 right-0 bg-button text-white py-2 font-poppins font-medium text-base opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-gray-800 transform translate-y-2 group-hover:translate-y-0"
         >
           Add To Cart
@@ -127,4 +202,3 @@ const ProductCard: React.FC<ProductCardProps> = ({ title, price, originalPrice, 
 };
 
 export default ProductCard;
-

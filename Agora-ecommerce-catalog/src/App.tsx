@@ -5,6 +5,14 @@ import Footer from './components/layout/Footer';
 import HomePage from './pages/home_page';
 import Signup from './pages/Signup';
 import Login from './pages/Login';
+import Wishlist from './pages/Wishlist';
+import Cart from './pages/Cart';
+import Checkout from './pages/Checkout';
+import Account from './pages/Account';
+import About from './pages/About';
+import Contact from './pages/Contact';
+import NotFound from './pages/NotFound';
+import ProductDetail from './pages/ProductDetail';
 
 const App: React.FC = () => {
   const [showBanner, setShowBanner] = useState(true);
@@ -50,10 +58,16 @@ const App: React.FC = () => {
         <main className="flex-1">
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/contact" element={<div className="p-8">Contact Page</div>} />
-            <Route path="/about" element={<div className="p-8">About Page</div>} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/wishlist" element={<Wishlist />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/account" element={<Account />} />
+            <Route path="/product/:id" element={<ProductDetail />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
         <Footer />
