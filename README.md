@@ -50,39 +50,26 @@ Built with **Tailwind CSS** to ensure a perfect experience on:
 # **📂 Project Structure**
 
 ```
+
 ecommerce-catalog/
 ├─ public/
-│  └─ assets/              <-- Static images
+│  └─ assets/              # Static images
 ├─ src/
-│  ├─ api/
-│  │  └─ apiSlice.ts       <-- If using RTK Query (Recommended over axios directly)
-│  ├─ components/          <-- REUSABLE components (used in multiple places)
-│  │  ├─ common/           <-- Buttons, Inputs, Spinners
-│  │  │  ├─ Button.tsx
-│  │  │  └─ LoadingSpinner.tsx
-│  │  ├─ layout/           <-- Navbar, Footer
-│  │  │  ├─ Header.tsx
-│  │  │  └─ Footer.tsx
-│  │  └─ product/          <-- Product specific components
-│  │     ├─ ProductCard.tsx
-│  │     └─ FilterBar.tsx
-│  ├─ hooks/               <-- Custom hooks
-│  │  └─ useDebounce.ts
-│  ├─ pages/
-│  │  ├─ Home.tsx
-│  │  ├─ ProductDetail.tsx
-│  │  └─ Cart.tsx          <-- Don't forget the Cart page!
-│  ├─ redux/
-│  │  ├─ store.ts
-│  │  ├─ slices/
-│  │  │  ├─ productSlice.ts
-│  │  │  └─ cartSlice.ts   <-- You need state for the cart
-│  ├─ types/
-│  │  └─ index.ts          <-- specific types (IProduct, ICartItem)
-│  ├─ utils/
-│  │  └─ currency.ts       <-- specific helper for money
-│  ├─ App.tsx
-│  └─ index.tsx
+│  ├─ api/
+│  │  └─ apiSlice.ts       # RTK Query base setup
+│  ├─ components/
+│  │  ├─ common/           # Buttons, Inputs, Loaders
+│  │  ├─ layout/           # Header, Footer, Dropdowns
+│  │  └─ product/          # Product UI components
+│  ├─ hooks/               # useDebounce, useCart, etc.
+│  ├─ pages/               # All page routes
+│  ├─ redux/
+│  │  ├─ store.ts
+│  │  └─ slices/
+│  ├─ types/               # Interfaces (IProduct, ICartItem)
+│  ├─ utils/               # Helpers (currency formatter)
+│  ├─ App.tsx
+│  └─ index.tsx
 ```
 
 ---
