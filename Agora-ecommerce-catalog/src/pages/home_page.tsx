@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProductCard from '../components/product/ProductCard';
 import Button from '../components/common/Button';
+import SEO from '../components/common/SEO';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -92,6 +93,11 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white relative">
+      <SEO 
+        title="Exclusive - Your Premium E-Commerce Destination"
+        description="Shop the latest electronics, fashion, gaming gear, and more at unbeatable prices. Free delivery on orders over $140. Flash sales up to 50% off!"
+        keywords="ecommerce, online shopping, electronics, fashion, gaming, flash sales, free delivery"
+      />
       {/* Scroll to Top Button */}
       {isScrolled && (
         <button

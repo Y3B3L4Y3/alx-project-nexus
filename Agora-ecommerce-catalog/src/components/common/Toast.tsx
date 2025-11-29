@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
-interface ToastProps {
+export interface ToastProps {
   message: string;
   type?: ToastType;
   duration?: number;
   onClose: () => void;
-  isVisible: boolean;
+  isVisible?: boolean;
 }
 
 const Toast: React.FC<ToastProps> = ({
@@ -15,7 +15,7 @@ const Toast: React.FC<ToastProps> = ({
   type = 'success',
   duration = 3000,
   onClose,
-  isVisible,
+  isVisible = true,
 }) => {
   const [isLeaving, setIsLeaving] = useState(false);
 

@@ -7,6 +7,7 @@ import { toggleWishlist } from '../redux/slices/wishlistSlice';
 import { useGetProductByIdQuery, useGetRelatedProductsQuery, useGetProductReviewsQuery } from '../api/productApi';
 import Button from '../components/common/Button';
 import ProductCard from '../components/product/ProductCard';
+import SEO from '../components/common/SEO';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -110,6 +111,15 @@ const ProductDetail: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
+      {product && (
+        <SEO 
+          title={`${product.name} - Buy Now`}
+          description={product.description}
+          keywords={`${product.category}, ${product.brand}, ${product.tags?.join(', ')}, buy online`}
+          image={product.thumbnail}
+          type="product"
+        />
+      )}
       <div className="max-w-[1170px] mx-auto px-4 py-10 md:py-20">
         {/* Breadcrumb */}
         <div className="text-sm text-gray-400 mb-10 md:mb-20">

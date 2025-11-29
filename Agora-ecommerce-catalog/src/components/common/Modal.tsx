@@ -50,11 +50,17 @@ const Modal: React.FC<ModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={title ? "modal-title" : undefined}
+    >
       {/* Overlay */}
       <div 
         className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300"
         onClick={closeOnOverlayClick ? onClose : undefined}
+        aria-hidden="true"
       />
       
       {/* Modal Content */}
@@ -66,7 +72,7 @@ const Modal: React.FC<ModalProps> = ({
         {(title || showCloseButton) && (
           <div className="flex items-center justify-between p-6 border-b border-gray-100">
             {title && (
-              <h3 className="text-xl font-inter font-semibold text-text-2">
+              <h3 id="modal-title" className="text-xl font-inter font-semibold text-text-2">
                 {title}
               </h3>
             )}

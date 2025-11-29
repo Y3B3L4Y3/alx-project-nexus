@@ -181,13 +181,13 @@ export const productApi = createApi({
     }),
 
     // Get best selling products (by review count)
-    getBestSellingProducts: builder.query<ApiResponse<Product[]>, number | void>({
-      queryFn: async (limit = 8) => {
+    getBestSellingProducts: builder.query<ApiResponse<Product[]>, number | undefined>({
+      queryFn: async (limit) => {
         await delay(200);
         
         const bestSelling = [...mockProducts]
           .sort((a, b) => b.reviewCount - a.reviewCount)
-          .slice(0, limit);
+          .slice(0, limit ?? 8);
         
         return {
           data: {

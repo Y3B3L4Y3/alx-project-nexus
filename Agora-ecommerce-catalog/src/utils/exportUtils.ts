@@ -17,7 +17,7 @@ export const exportToJSON = <T>(data: T[], filename: string): void => {
 /**
  * Export data as CSV file
  */
-export const exportToCSV = <T extends Record<string, unknown>>(
+export const exportToCSV = <T extends object>(
   data: T[],
   filename: string,
   columns?: { key: keyof T; label: string }[]
@@ -84,9 +84,7 @@ const downloadFile = (blob: Blob, filename: string): void => {
 /**
  * Export products to CSV with specific columns
  */
-export const exportProductsToCSV = <T extends Record<string, unknown>>(
-  products: T[]
-): void => {
+export const exportProductsToCSV = <T extends object>(products: T[]): void => {
   const columns = [
     { key: 'id' as keyof T, label: 'ID' },
     { key: 'title' as keyof T, label: 'Product Name' },
@@ -102,9 +100,7 @@ export const exportProductsToCSV = <T extends Record<string, unknown>>(
 /**
  * Export orders to CSV with specific columns
  */
-export const exportOrdersToCSV = <T extends Record<string, unknown>>(
-  orders: T[]
-): void => {
+export const exportOrdersToCSV = <T extends object>(orders: T[]): void => {
   const columns = [
     { key: 'id' as keyof T, label: 'Order ID' },
     { key: 'customer' as keyof T, label: 'Customer' },
@@ -120,9 +116,7 @@ export const exportOrdersToCSV = <T extends Record<string, unknown>>(
 /**
  * Export users to CSV with specific columns
  */
-export const exportUsersToCSV = <T extends Record<string, unknown>>(
-  users: T[]
-): void => {
+export const exportUsersToCSV = <T extends object>(users: T[]): void => {
   const columns = [
     { key: 'id' as keyof T, label: 'User ID' },
     { key: 'name' as keyof T, label: 'Name' },
@@ -138,9 +132,7 @@ export const exportUsersToCSV = <T extends Record<string, unknown>>(
 /**
  * Export messages to CSV with specific columns
  */
-export const exportMessagesToCSV = <T extends Record<string, unknown>>(
-  messages: T[]
-): void => {
+export const exportMessagesToCSV = <T extends object>(messages: T[]): void => {
   const columns = [
     { key: 'id' as keyof T, label: 'Message ID' },
     { key: 'name' as keyof T, label: 'From' },
@@ -160,4 +152,3 @@ const getDateString = (): string => {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 };
-

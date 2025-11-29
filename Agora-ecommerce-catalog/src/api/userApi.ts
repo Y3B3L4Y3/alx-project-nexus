@@ -3,7 +3,6 @@ import type { User, Order, Address, PaymentMethod, ApiResponse, ContactMessage }
 import { 
   mockUser, 
   mockOrders,
-  getUserById,
   getUserOrders,
   getOrderById,
 } from './mock';
@@ -51,11 +50,11 @@ export const userApi = createApi({
     }),
 
     // Get user orders
-    getUserOrders: builder.query<ApiResponse<Order[]>, number | void>({
-      queryFn: async (userId = mockUser.id) => {
+    getUserOrders: builder.query<ApiResponse<Order[]>, number | undefined>({
+      queryFn: async (userId) => {
         await delay(250);
         
-        const orders = getUserOrders(userId);
+        const orders = getUserOrders(userId ?? mockUser.id);
         
         return {
           data: {
@@ -101,7 +100,7 @@ export const userApi = createApi({
       paymentMethodId: number;
       couponCode?: string;
     }>({
-      queryFn: async (orderData) => {
+      queryFn: async (_orderData) => {
         await delay(500);
         
         // Generate new order (mock)
@@ -227,7 +226,7 @@ export const userApi = createApi({
 
     // Delete address
     deleteAddress: builder.mutation<ApiResponse<null>, number>({
-      queryFn: async (addressId) => {
+      queryFn: async (_addressId) => {
         await delay(200);
         
         return {
@@ -279,7 +278,7 @@ export const userApi = createApi({
 
     // Delete payment method
     deletePaymentMethod: builder.mutation<ApiResponse<null>, number>({
-      queryFn: async (paymentId) => {
+      queryFn: async (_paymentId) => {
         await delay(200);
         
         return {
