@@ -360,7 +360,7 @@ Navigate to: `http://localhost:5173/admin/login`
 ### 3. Explore Admin Features
 - View dashboard statistics
 - Manage products, orders, users
-- Respond to customer messages
+- Respond to customer messages 
 - Configure store settings
 
 ---

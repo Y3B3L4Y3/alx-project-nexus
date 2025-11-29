@@ -1,5 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import type { RootState } from '../../redux/store';
+import { updateUser } from '../../redux/slices/authSlice';
 import Button from '../common/Button';
+import Toast from '../common/Toast';
+import { useToast } from '../../hooks/useToast';
 
 interface ProfileData {
   firstName: string;
@@ -12,15 +17,50 @@ interface ProfileData {
 }
 
 const ProfileSection: React.FC = () => {
-  const [profileData, setProfileData] = useState<ProfileData>({
-    firstName: 'Md',
-    lastName: 'Rimel',
-    email: 'rimel1111@gmail.com',
-    address: 'Kingston, 5236, United State',
+  const dispatch = useDispatch();
+  const user = useSelector((state: RootState) => state.auth.user);
+  const { toast, showToast, hideToast } = useToast();
+
+  // Split user name into first and last name
+  const getNameParts = (fullName: string) => {
+    const parts = fullName.trim().split(' ');
+    return {
+      firstName: parts[0] || '',
+      lastName: parts.slice(1).join(' ') || ''
+    };
+  };
+
+  const initialData = user ? {
+    ...getNameParts(user.name),
+    email: user.email,
+    address: '',
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
-  });
+  } : {
+    firstName: '',
+    lastName: '',
+    email: '',
+    address: '',
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  };
+
+  const [profileData, setProfileData] = useState<ProfileData>(initialData);
+
+  // Update form when user data changes
+  useEffect(() => {
+    if (user) {
+      const nameParts = getNameParts(user.name);
+      setProfileData(prev => ({
+        ...prev,
+        firstName: nameParts.firstName,
+        lastName: nameParts.lastName,
+        email: user.email,
+      }));
+    }
+  }, [user]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -29,23 +69,55 @@ const ProfileSection: React.FC = () => {
 
   const handleSaveChanges = (e: React.FormEvent) => {
     e.preventDefault();
-    if (profileData.newPassword && profileData.newPassword !== profileData.confirmPassword) {
-      alert('New passwords do not match!');
-      return;
+    
+    // Validate passwords if changing
+    if (profileData.newPassword || profileData.confirmPassword) {
+      if (profileData.newPassword !== profileData.confirmPassword) {
+        showToast('New passwords do not match!', 'error');
+        return;
+      }
+      if (profileData.newPassword.length < 6) {
+        showToast('Password must be at least 6 characters!', 'error');
+        return;
+      }
+      if (!profileData.currentPassword) {
+        showToast('Please enter your current password!', 'error');
+        return;
+      }
     }
-    alert('Profile changes saved successfully!');
-  };
 
-  const handleCancel = () => {
-    setProfileData({
-      firstName: 'Md',
-      lastName: 'Rimel',
-      email: 'rimel1111@gmail.com',
-      address: 'Kingston, 5236, United State',
+    // Update user in Redux
+    const fullName = `${profileData.firstName} ${profileData.lastName}`.trim();
+    dispatch(updateUser({
+      name: fullName,
+      email: profileData.email,
+    }));
+
+    // Clear password fields
+    setProfileData(prev => ({
+      ...prev,
       currentPassword: '',
       newPassword: '',
       confirmPassword: '',
-    });
+    }));
+
+    showToast('Profile updated successfully!', 'success');
+  };
+
+  const handleCancel = () => {
+    // Reset to current user data
+    if (user) {
+      const nameParts = getNameParts(user.name);
+      setProfileData({
+        firstName: nameParts.firstName,
+        lastName: nameParts.lastName,
+        email: user.email,
+        address: '',
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
+    }
   };
 
   return (
@@ -67,7 +139,7 @@ const ProfileSection: React.FC = () => {
               name="firstName"
               value={profileData.firstName}
               onChange={handleInputChange}
-              placeholder="Md"
+              placeholder="First Name"
               className="w-full h-[50px] bg-secondary rounded px-4 font-poppins text-base text-text-2 outline-none focus:ring-2 focus:ring-secondary-2/30 transition-all placeholder:text-gray-400"
             />
           </div>
@@ -81,7 +153,7 @@ const ProfileSection: React.FC = () => {
               name="lastName"
               value={profileData.lastName}
               onChange={handleInputChange}
-              placeholder="Rimel"
+              placeholder="Last Name"
               className="w-full h-[50px] bg-secondary rounded px-4 font-poppins text-base text-text-2 outline-none focus:ring-2 focus:ring-secondary-2/30 transition-all placeholder:text-gray-400"
             />
           </div>
@@ -99,7 +171,7 @@ const ProfileSection: React.FC = () => {
               name="email"
               value={profileData.email}
               onChange={handleInputChange}
-              placeholder="rimel1111@gmail.com"
+              placeholder="your.email@example.com"
               className="w-full h-[50px] bg-secondary rounded px-4 font-poppins text-base text-text-2 outline-none focus:ring-2 focus:ring-secondary-2/30 transition-all placeholder:text-gray-400"
             />
           </div>
@@ -113,7 +185,7 @@ const ProfileSection: React.FC = () => {
               name="address"
               value={profileData.address}
               onChange={handleInputChange}
-              placeholder="Kingston, 5236, United State"
+              placeholder="Your Address (optional)"
               className="w-full h-[50px] bg-secondary rounded px-4 font-poppins text-base text-text-2 outline-none focus:ring-2 focus:ring-secondary-2/30 transition-all placeholder:text-gray-400"
             />
           </div>
@@ -164,6 +236,14 @@ const ProfileSection: React.FC = () => {
           </Button>
         </div>
       </form>
+
+      {/* Toast Notification */}
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+      />
     </div>
   );
 };

@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { login } from '../redux/slices/authSlice';
 import Button from '../components/common/Button';
 
 const Login: React.FC = () => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -13,7 +17,17 @@ const Login: React.FC = () => {
   const onSubmit: React.FormEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();
     if (!isValid) return;
-    alert(`Logged in as ${email}`);
+    
+    // Demo login - in production, this would call an API
+    const user = {
+      id: 'user-001',
+      name: email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1),
+      email: email,
+      avatar: '',
+    };
+    
+    dispatch(login(user));
+    navigate('/products');
   };
 
   return (

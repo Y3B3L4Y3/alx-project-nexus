@@ -13,13 +13,20 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import NotFound from './pages/NotFound';
 import ProductDetail from './pages/ProductDetail';
+import Products from './pages/Products';
+
+// User Account imports
+import Orders from './pages/Orders';
+import OrderDetail from './pages/OrderDetail';
+import AddressManagement from './pages/AddressManagement';
+import ProfileSettings from './pages/Profile_Settings';
 
 // Admin imports
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminLayout from './components/admin/AdminLayout';
 import Dashboard from './pages/admin/Dashboard';
-import Products from './pages/admin/Products';
-import Orders from './pages/admin/Orders';
+import AdminProducts from './pages/admin/Products';
+import AdminOrders from './pages/admin/Orders';
 import Users from './pages/admin/Users';
 import Messages from './pages/admin/Messages';
 import Settings from './pages/admin/Settings';
@@ -70,8 +77,8 @@ const App: React.FC = () => {
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/*" element={<AdminLayout />}>
             <Route path="dashboard" element={<Dashboard />} />
-            <Route path="products" element={<Products />} />
-            <Route path="orders" element={<Orders />} />
+            <Route path="products" element={<AdminProducts />} />
+            <Route path="orders" element={<AdminOrders />} />
             <Route path="users" element={<Users />} />
             <Route path="messages" element={<Messages />} />
             <Route path="settings" element={<Settings />} />
@@ -84,6 +91,7 @@ const App: React.FC = () => {
               <main className="flex-1">
                 <Routes>
                   <Route path="/" element={<HomePage />} />
+                  <Route path="/products" element={<Products />} />
                   <Route path="/about" element={<About />} />
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/signup" element={<Signup />} />
@@ -92,6 +100,10 @@ const App: React.FC = () => {
                   <Route path="/cart" element={<Cart />} />
                   <Route path="/checkout" element={<Checkout />} />
                   <Route path="/account" element={<Account />} />
+                  <Route path="/account/orders" element={<Orders />} />
+                  <Route path="/account/orders/:id" element={<OrderDetail />} />
+                  <Route path="/account/addresses" element={<AddressManagement />} />
+                  <Route path="/account/settings" element={<ProfileSettings />} />
                   <Route path="/product/:id" element={<ProductDetail />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

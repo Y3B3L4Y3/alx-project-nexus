@@ -75,7 +75,7 @@ const Contact: React.FC = () => {
                   <h3 className="font-poppins font-medium text-base text-text-2">Call To Us</h3>
                 </div>
                 <p className="text-sm text-text-2 mb-4">We are available 24/7, 7 days a week.</p>
-                <p className="text-sm text-text-2">Phone: +8801611112222</p>
+                <p className="text-sm text-text-2">Phone: +251911111111</p>
               </div>
 
               {/* Write To Us */}

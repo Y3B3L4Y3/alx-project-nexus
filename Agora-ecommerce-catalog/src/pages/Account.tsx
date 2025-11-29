@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import type { RootState } from '../redux/store';
 import ProfileSection from '../components/account/ProfileSection';
 import AddressBookSection from '../components/account/AddressBookSection';
 import PaymentOptionsSection from '../components/account/PaymentOptionsSection';
@@ -11,6 +13,10 @@ type SectionKey = 'profile' | 'address' | 'payment' | 'returns' | 'cancellations
 const Account: React.FC = () => {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<SectionKey>('profile');
+  
+  // Get logged-in user from Redux
+  const user = useSelector((state: RootState) => state.auth.user);
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
 
   const sidebarItems = [
     {
@@ -94,9 +100,25 @@ const Account: React.FC = () => {
               </>
             )}
           </div>
-          <div className="text-sm text-text-2">
-            Welcome! <span className="text-secondary-2 font-medium">Md Rimel</span>
-          </div>
+          {isAuthenticated && user && (
+            <div className="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg border border-gray-100">
+              {user.avatar ? (
+                <img 
+                  src={user.avatar} 
+                  alt={user.name} 
+                  className="w-8 h-8 rounded-full object-cover border-2 border-secondary-2"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-secondary-2 flex items-center justify-center text-white text-sm font-medium border-2 border-secondary-2">
+                  {user.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-500">Welcome back,</span>
+                <span className="text-sm text-text-2 font-semibold">{user.name}</span>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col lg:flex-row gap-10 lg:gap-[100px]">

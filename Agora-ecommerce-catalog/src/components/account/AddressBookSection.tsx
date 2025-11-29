@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
+import type { RootState } from '../../redux/store';
 import Button from '../common/Button';
 
 interface Address {
@@ -12,21 +14,25 @@ interface Address {
 }
 
 const AddressBookSection: React.FC = () => {
+  // Get logged-in user
+  const user = useSelector((state: RootState) => state.auth.user);
+  const userName = user?.name || 'User';
+
   const [addresses, setAddresses] = useState<Address[]>([
     {
       id: 1,
-      name: 'Md Rimel',
-      phone: '+880 1234567890',
-      address: 'House 123, Road 456',
-      city: 'Kingston',
+      name: userName,
+      phone: '+1 234 567 8900',
+      address: '123 Main Street, Apt 4B',
+      city: 'New York',
       country: 'United States',
       isDefault: true,
     },
     {
       id: 2,
-      name: 'Md Rimel (Office)',
-      phone: '+880 9876543210',
-      address: 'Office Tower, Floor 5',
+      name: `${userName} (Office)`,
+      phone: '+1 234 567 8901',
+      address: '456 Business Ave, Suite 200',
       city: 'New York',
       country: 'United States',
       isDefault: false,
@@ -50,11 +56,14 @@ const AddressBookSection: React.FC = () => {
   };
 
   const handleDelete = (id: number) => {
-    if (addresses.find(a => a.id === id)?.isDefault) {
+    const addressToDelete = addresses.find(a => a.id === id);
+    if (addressToDelete?.isDefault) {
       alert('Cannot delete default address. Set another address as default first.');
       return;
     }
-    setAddresses(prev => prev.filter(addr => addr.id !== id));
+    if (confirm(`Are you sure you want to delete this address?`)) {
+      setAddresses(prev => prev.filter(addr => addr.id !== id));
+    }
   };
 
   const handleAddAddress = (e: React.FormEvent) => {

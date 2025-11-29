@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../redux/store';
+import AccountDropdown from './AccountDropdown';
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -23,9 +24,9 @@ const Header: React.FC = () => {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-12">
           <Link to="/" className={`text-base transition-colors ${isActive('/') ? 'text-secondary-2 font-medium' : 'text-text-2 hover:text-secondary-2'}`}>Home</Link>
+          <Link to="/products" className={`text-base transition-colors ${isActive('/products') ? 'text-secondary-2 font-medium' : 'text-text-2 hover:text-secondary-2'}`}>Products</Link>
           <Link to="/contact" className={`text-base transition-colors ${isActive('/contact') ? 'text-secondary-2 font-medium' : 'text-text-2 hover:text-secondary-2'}`}>Contact</Link>
           <Link to="/about" className={`text-base transition-colors ${isActive('/about') ? 'text-secondary-2 font-medium' : 'text-text-2 hover:text-secondary-2'}`}>About</Link>
-          <Link to="/signup" className={`text-base transition-colors ${isActive('/signup') ? 'text-secondary-2 font-medium' : 'text-text-2 hover:text-secondary-2'}`}>Sign Up</Link>
         </nav>
 
         {/* Icons & Search */}
@@ -63,6 +64,11 @@ const Header: React.FC = () => {
             )}
           </Link>
 
+          {/* Account Dropdown */}
+          <div className="hidden md:block">
+            <AccountDropdown />
+          </div>
+
           {/* Mobile Menu Button */}
           <button 
             className="md:hidden text-text-2 hover:text-secondary-2"
@@ -83,9 +89,9 @@ const Header: React.FC = () => {
       {isMenuOpen && (
         <nav className="md:hidden bg-white border-t border-gray-100 px-4 py-4 flex flex-col gap-4 animate-fade-in">
           <Link to="/" className="text-base text-text-2 hover:text-secondary-2" onClick={() => setIsMenuOpen(false)}>Home</Link>
+          <Link to="/products" className="text-base text-text-2 hover:text-secondary-2" onClick={() => setIsMenuOpen(false)}>Products</Link>
           <Link to="/contact" className="text-base text-text-2 hover:text-secondary-2" onClick={() => setIsMenuOpen(false)}>Contact</Link>
           <Link to="/about" className="text-base text-text-2 hover:text-secondary-2" onClick={() => setIsMenuOpen(false)}>About</Link>
-          <Link to="/signup" className="text-base text-text-2 hover:text-secondary-2" onClick={() => setIsMenuOpen(false)}>Sign Up</Link>
           <div className="flex items-center bg-secondary rounded px-4 py-2 gap-3 mt-2">
             <input 
               type="text" 
@@ -95,6 +101,10 @@ const Header: React.FC = () => {
             <svg className="w-5 h-5 text-text-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
+          </div>
+          {/* Mobile Account Dropdown */}
+          <div className="border-t border-gray-100 pt-4">
+            <AccountDropdown />
           </div>
         </nav>
       )}

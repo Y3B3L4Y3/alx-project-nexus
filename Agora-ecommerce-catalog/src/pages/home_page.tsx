@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ProductCard from '../components/product/ProductCard';
 import Button from '../components/common/Button';
 
 const HomePage: React.FC = () => {
+  const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState({ days: 3, hours: 23, minutes: 19, seconds: 56 });
   const [musicTimeLeft, setMusicTimeLeft] = useState({ days: 5, hours: 23, minutes: 59, seconds: 35 });
   const [activeCategory, setActiveCategory] = useState('Camera');
@@ -184,7 +186,7 @@ const HomePage: React.FC = () => {
           ))}
         </div>
         <div className="flex justify-center mt-8 md:mt-16">
-          <Button variant="primary">View All Products</Button>
+          <Button variant="primary" onClick={() => navigate('/products')}>View All Products</Button>
         </div>
       </div>
 
@@ -230,7 +232,7 @@ const HomePage: React.FC = () => {
             </div>
             <h2 className="text-2xl md:text-4xl font-inter font-semibold">Best Selling Products</h2>
           </div>
-          <Button variant="primary">View All</Button>
+          <Button variant="primary" onClick={() => navigate('/products')}>View All</Button>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 justify-items-center">
           {bestSellingProducts.map((product, index) => (
@@ -300,7 +302,7 @@ const HomePage: React.FC = () => {
           )}
           <Button 
             variant="primary"
-            onClick={() => alert('Navigating to all products...')}
+            onClick={() => navigate('/products')}
           >
             View All Products
           </Button>
