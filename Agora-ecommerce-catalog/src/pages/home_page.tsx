@@ -3,14 +3,117 @@ import { useNavigate } from 'react-router-dom';
 import ProductCard from '../components/product/ProductCard';
 import Button from '../components/common/Button';
 import SEO from '../components/common/SEO';
+import {
+  useGetFlashSaleProductsQuery,
+  useGetBestSellingProductsQuery,
+  useGetNewArrivalsQuery,
+  useGetProductsQuery,
+  useGetCategoriesQuery,
+} from '../api/productApi';
+
+// Loading skeleton for products
+const ProductSkeleton = () => (
+  <div className="animate-pulse w-[190px]">
+    <div className="h-[180px] bg-gray-200 rounded-lg mb-4"></div>
+    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+  </div>
+);
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState({ days: 3, hours: 23, minutes: 19, seconds: 56 });
   const [musicTimeLeft, setMusicTimeLeft] = useState({ days: 5, hours: 23, minutes: 59, seconds: 35 });
-  const [activeCategory, setActiveCategory] = useState('Camera');
+  const [activeCategory, setActiveCategory] = useState('');
   const [visibleProducts, setVisibleProducts] = useState(4);
   const [isScrolled, setIsScrolled] = useState(false);
+
+  // Fetch real data from API
+  const { data: flashSaleData, isLoading: isLoadingFlashSale } = useGetFlashSaleProductsQuery();
+  const { data: bestSellingData, isLoading: isLoadingBestSelling } = useGetBestSellingProductsQuery(4);
+  const { data: newArrivalsData, isLoading: isLoadingNewArrivals } = useGetNewArrivalsQuery();
+  // Featured products query available for future use
+  // const { data: featuredData, isLoading: isLoadingFeatured } = useGetFeaturedProductsQuery();
+  const { data: exploreData, isLoading: isLoadingExplore } = useGetProductsQuery({ page: 1, limit: 8 });
+  const { data: categoriesData, isLoading: isLoadingCategories } = useGetCategoriesQuery();
+
+  // Transform API data for ProductCard component
+  const flashSaleProducts = flashSaleData?.data?.map(product => ({
+    id: product.id,
+    title: product.name,
+    price: product.price,
+    originalPrice: product.originalPrice,
+    discount: product.discount,
+    image: product.thumbnail || 'https://via.placeholder.com/190x180',
+    rating: product.rating || 0,
+    reviews: product.reviewCount || 0,
+  })) || [];
+
+  const bestSellingProducts = bestSellingData?.data?.map(product => ({
+    id: product.id,
+    title: product.name,
+    price: product.price,
+    originalPrice: product.originalPrice,
+    image: product.thumbnail || 'https://via.placeholder.com/190x180',
+    rating: product.rating || 0,
+    reviews: product.reviewCount || 0,
+  })) || [];
+
+  const newArrivalsProducts = newArrivalsData?.data?.map(product => ({
+    id: product.id,
+    title: product.name,
+    price: product.price,
+    originalPrice: product.originalPrice,
+    discount: product.discount,
+    image: product.thumbnail || 'https://via.placeholder.com/190x180',
+    rating: product.rating || 0,
+    reviews: product.reviewCount || 0,
+  })) || [];
+
+  // Featured products transformation available for future use
+  // const featuredProducts = featuredData?.data?.map(product => ({
+  //   id: product.id,
+  //   title: product.name,
+  //   price: product.price,
+  //   originalPrice: product.originalPrice,
+  //   discount: product.discount,
+  //   image: product.thumbnail || 'https://via.placeholder.com/190x180',
+  //   rating: product.rating || 0,
+  //   reviews: product.reviewCount || 0,
+  // })) || [];
+
+  const exploreProducts = exploreData?.data?.map(product => ({
+    id: product.id,
+    title: product.name,
+    price: product.price,
+    image: product.thumbnail || 'https://via.placeholder.com/190x180',
+    rating: product.rating || 0,
+    reviews: product.reviewCount || 0,
+    isNew: product.isNew,
+  })) || [];
+
+  // Map categories with icons
+  const categoryIcons: Record<string, string> = {
+    'electronics': '📱',
+    'fashion': '👕',
+    'gaming': '🎮',
+    'furniture': '🪑',
+    'sports': '⚽',
+    'health-beauty': '💄',
+    'groceries': '🛒',
+    'baby-toys': '🧸',
+    'phones': '📱',
+    'computers': '💻',
+    'smartwatch': '⌚',
+    'camera': '📷',
+    'headphones': '🎧',
+  };
+
+  const categories = categoriesData?.data?.map(cat => ({
+    name: cat.name,
+    slug: cat.slug,
+    icon: categoryIcons[cat.slug.toLowerCase()] || '📦',
+  })) || [];
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -46,44 +149,9 @@ const HomePage: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const flashSaleProducts = [
-    { title: 'HAVIT HV-G92 Gamepad', price: 120, originalPrice: 160, discount: 40, image: 'https://via.placeholder.com/190x180', rating: 5, reviews: 88 },
-    { title: 'AK-900 Wired Keyboard', price: 960, originalPrice: 1160, discount: 35, image: 'https://via.placeholder.com/190x180', rating: 4, reviews: 75 },
-    { title: 'IPS LCD Gaming Monitor', price: 370, originalPrice: 400, discount: 30, image: 'https://via.placeholder.com/190x180', rating: 5, reviews: 99 },
-    { title: 'S-Series Comfort Chair', price: 375, originalPrice: 400, discount: 25, image: 'https://via.placeholder.com/190x180', rating: 4, reviews: 99 },
-  ];
-
-  const bestSellingProducts = [
-    { title: 'The north coat', price: 260, originalPrice: 360, image: 'https://via.placeholder.com/190x180', rating: 5, reviews: 65 },
-    { title: 'Gucci duffle bag', price: 960, originalPrice: 1160, image: 'https://via.placeholder.com/190x180', rating: 4, reviews: 65 },
-    { title: 'RGB liquid CPU Cooler', price: 160, originalPrice: 170, image: 'https://via.placeholder.com/190x180', rating: 4, reviews: 65 },
-    { title: 'Small BookSelf', price: 360, image: 'https://via.placeholder.com/190x180', rating: 5, reviews: 65 },
-  ];
-
-  const exploreProducts = [
-    { title: 'Breed Dry Dog Food', price: 100, image: 'https://via.placeholder.com/190x180', rating: 3, reviews: 35 },
-    { title: 'CANON EOS DSLR Camera', price: 360, image: 'https://via.placeholder.com/190x180', rating: 4, reviews: 95 },
-    { title: 'ASUS FHD Gaming Laptop', price: 700, image: 'https://via.placeholder.com/190x180', rating: 5, reviews: 325 },
-    { title: 'Curology Product Set', price: 500, image: 'https://via.placeholder.com/190x180', rating: 4, reviews: 145 },
-    { title: 'Kids Electric Car', price: 960, image: 'https://via.placeholder.com/190x180', rating: 5, reviews: 65, isNew: true },
-    { title: 'Jr. Zoom Soccer Cleats', price: 1160, image: 'https://via.placeholder.com/190x180', rating: 5, reviews: 35 },
-    { title: 'GP11 Shooter USB Gamepad', price: 660, image: 'https://via.placeholder.com/190x180', rating: 4, reviews: 55, isNew: true },
-    { title: 'Quilted Satin Jacket', price: 660, image: 'https://via.placeholder.com/190x180', rating: 4, reviews: 55 },
-  ];
-
-  const categories = [
-    { name: 'Phones', icon: '📱' },
-    { name: 'Computers', icon: '💻' },
-    { name: 'SmartWatch', icon: '⌚' },
-    { name: 'Camera', icon: '📷' },
-    { name: 'HeadPhones', icon: '🎧' },
-    { name: 'Gaming', icon: '🎮' },
-  ];
-
-  const handleCategoryClick = (categoryName: string) => {
-    setActiveCategory(categoryName);
-    // Simulate filtering products by category
-    console.log(`Filtering products by category: ${categoryName}`);
+  const handleCategoryClick = (categorySlug: string) => {
+    setActiveCategory(categorySlug);
+    navigate(`/products?category=${categorySlug}`);
   };
 
   const scrollToFlashSales = () => {
@@ -94,7 +162,7 @@ const HomePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-white relative">
       <SEO 
-        title="Exclusive - Your Premium E-Commerce Destination"
+        title="Agora - Your Premium E-Commerce Destination"
         description="Shop the latest electronics, fashion, gaming gear, and more at unbeatable prices. Free delivery on orders over $140. Flash sales up to 50% off!"
         keywords="ecommerce, online shopping, electronics, fashion, gaming, flash sales, free delivery"
       />
@@ -115,25 +183,45 @@ const HomePage: React.FC = () => {
         <div className="flex flex-col md:flex-row gap-4 md:gap-16">
           {/* Sidebar Categories - Hidden on Mobile */}
           <div className="hidden md:flex w-[217px] flex-col gap-4 pt-10 border-r border-gray-200 pr-16">
-            <div className="flex items-center justify-between cursor-pointer hover:text-secondary-2">
-              <span>Woman's Fashion</span>
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-            <div className="flex items-center justify-between cursor-pointer hover:text-secondary-2">
-              <span>Men's Fashion</span>
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-            <div className="cursor-pointer hover:text-secondary-2">Electronics</div>
-            <div className="cursor-pointer hover:text-secondary-2">Home & Lifestyle</div>
-            <div className="cursor-pointer hover:text-secondary-2">Medicine</div>
-            <div className="cursor-pointer hover:text-secondary-2">Sports & Outdoor</div>
-            <div className="cursor-pointer hover:text-secondary-2">Baby's & Toys</div>
-            <div className="cursor-pointer hover:text-secondary-2">Groceries & Pets</div>
-            <div className="cursor-pointer hover:text-secondary-2">Health & Beauty</div>
+            {isLoadingCategories ? (
+              Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="h-5 bg-gray-200 rounded animate-pulse w-3/4"></div>
+              ))
+            ) : categories.length > 0 ? (
+              categories.slice(0, 9).map((category, index) => (
+                <div 
+                  key={index}
+                  onClick={() => handleCategoryClick(category.slug)}
+                  className="flex items-center justify-between cursor-pointer hover:text-secondary-2 transition-colors"
+                >
+                  <span>{category.name}</span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              ))
+            ) : (
+              <>
+                <div className="flex items-center justify-between cursor-pointer hover:text-secondary-2">
+                  <span>Woman's Fashion</span>
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+                <div className="flex items-center justify-between cursor-pointer hover:text-secondary-2">
+                  <span>Men's Fashion</span>
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+                <div className="cursor-pointer hover:text-secondary-2">Electronics</div>
+                <div className="cursor-pointer hover:text-secondary-2">Home & Lifestyle</div>
+                <div className="cursor-pointer hover:text-secondary-2">Sports & Outdoor</div>
+                <div className="cursor-pointer hover:text-secondary-2">Baby's & Toys</div>
+                <div className="cursor-pointer hover:text-secondary-2">Groceries & Pets</div>
+                <div className="cursor-pointer hover:text-secondary-2">Health & Beauty</div>
+              </>
+            )}
           </div>
           {/* Hero Banner - Responsive with Animation */}
           <div className="flex-1 bg-button text-text rounded flex flex-col md:flex-row items-center justify-between px-8 md:px-16 py-8 md:py-14 gap-8 animate-fade-in">
@@ -163,7 +251,9 @@ const HomePage: React.FC = () => {
           </div>
         </div>
       </div>
-      <div className="max-w-[1170px] mx-auto px-4 pb-16 border-b">
+
+      {/* Flash Sales Section */}
+      <div id="flash-sales" className="max-w-[1170px] mx-auto px-4 pb-16 border-b">
         <div className="flex items-end justify-between mb-10">
           <div className="flex items-end gap-20">
             <div className="flex flex-col gap-6">
@@ -186,10 +276,16 @@ const HomePage: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="flex gap-8 overflow-x-auto">
-          {flashSaleProducts.map((product, index) => (
-            <ProductCard key={index} {...product} />
-          ))}
+        <div className="flex gap-8 overflow-x-auto pb-4">
+          {isLoadingFlashSale ? (
+            Array.from({ length: 4 }).map((_, i) => <ProductSkeleton key={i} />)
+          ) : flashSaleProducts.length > 0 ? (
+            flashSaleProducts.map((product, index) => (
+              <ProductCard key={product.id || index} {...product} />
+            ))
+          ) : (
+            <p className="text-gray-500">No flash sale products available at the moment.</p>
+          )}
         </div>
         <div className="flex justify-center mt-8 md:mt-16">
           <Button variant="primary" onClick={() => navigate('/products')}>View All Products</Button>
@@ -208,23 +304,48 @@ const HomePage: React.FC = () => {
           </div>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-8">
-          {categories.map((category, index) => (
-            <div 
-              key={index} 
-              onClick={() => handleCategoryClick(category.name)}
-              className={`flex flex-col items-center justify-center gap-3 md:gap-4 h-28 md:h-36 rounded border transform transition-all duration-300 hover:scale-105 hover:shadow-lg ${
-                activeCategory === category.name 
-                  ? 'bg-secondary-2 text-white border-secondary-2 scale-105' 
-                  : 'border-gray-300 hover:bg-secondary-2 hover:text-white'
-              } cursor-pointer`}
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              <span className={`text-3xl md:text-5xl transition-transform ${activeCategory === category.name ? 'scale-110' : ''}`}>
-                {category.icon}
-              </span>
-              <span className="text-sm md:text-base font-medium">{category.name}</span>
-            </div>
-          ))}
+          {isLoadingCategories ? (
+            Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-36 bg-gray-200 rounded animate-pulse"></div>
+            ))
+          ) : categories.length > 0 ? (
+            categories.slice(0, 6).map((category, index) => (
+              <div 
+                key={index} 
+                onClick={() => handleCategoryClick(category.slug)}
+                className={`flex flex-col items-center justify-center gap-3 md:gap-4 h-28 md:h-36 rounded border transform transition-all duration-300 hover:scale-105 hover:shadow-lg ${
+                  activeCategory === category.slug 
+                    ? 'bg-secondary-2 text-white border-secondary-2 scale-105' 
+                    : 'border-gray-300 hover:bg-secondary-2 hover:text-white'
+                } cursor-pointer`}
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <span className={`text-3xl md:text-5xl transition-transform ${activeCategory === category.slug ? 'scale-110' : ''}`}>
+                  {category.icon}
+                </span>
+                <span className="text-sm md:text-base font-medium">{category.name}</span>
+              </div>
+            ))
+          ) : (
+            // Fallback categories if API returns empty
+            [
+              { name: 'Phones', icon: '📱' },
+              { name: 'Computers', icon: '💻' },
+              { name: 'SmartWatch', icon: '⌚' },
+              { name: 'Camera', icon: '📷' },
+              { name: 'HeadPhones', icon: '🎧' },
+              { name: 'Gaming', icon: '🎮' },
+            ].map((category, index) => (
+              <div 
+                key={index} 
+                onClick={() => handleCategoryClick(category.name.toLowerCase())}
+                className="flex flex-col items-center justify-center gap-3 md:gap-4 h-28 md:h-36 rounded border border-gray-300 hover:bg-secondary-2 hover:text-white cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-lg"
+              >
+                <span className="text-3xl md:text-5xl">{category.icon}</span>
+                <span className="text-sm md:text-base font-medium">{category.name}</span>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -241,9 +362,15 @@ const HomePage: React.FC = () => {
           <Button variant="primary" onClick={() => navigate('/products')}>View All</Button>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 justify-items-center">
-          {bestSellingProducts.map((product, index) => (
-            <ProductCard key={index} {...product} />
-          ))}
+          {isLoadingBestSelling ? (
+            Array.from({ length: 4 }).map((_, i) => <ProductSkeleton key={i} />)
+          ) : bestSellingProducts.length > 0 ? (
+            bestSellingProducts.map((product, index) => (
+              <ProductCard key={product.id || index} {...product} />
+            ))
+          ) : (
+            <p className="col-span-4 text-gray-500">No best selling products available.</p>
+          )}
         </div>
       </div>
 
@@ -268,7 +395,7 @@ const HomePage: React.FC = () => {
               ))}
             </div>
             <div className="flex justify-center md:justify-start">
-              <Button variant="success" onClick={() => alert('Redirecting to product page...')}>
+              <Button variant="success" onClick={() => navigate('/products?category=headphones')}>
                 Buy Now!
               </Button>
             </div>
@@ -291,11 +418,17 @@ const HomePage: React.FC = () => {
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 mb-8 md:mb-16 justify-items-center">
-          {exploreProducts.slice(0, visibleProducts).map((product, index) => (
-            <div key={index} className="animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
-              <ProductCard {...product} />
-            </div>
-          ))}
+          {isLoadingExplore ? (
+            Array.from({ length: 4 }).map((_, i) => <ProductSkeleton key={i} />)
+          ) : exploreProducts.length > 0 ? (
+            exploreProducts.slice(0, visibleProducts).map((product, index) => (
+              <div key={product.id || index} className="animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
+                <ProductCard {...product} />
+              </div>
+            ))
+          ) : (
+            <p className="col-span-4 text-gray-500">No products available.</p>
+          )}
         </div>
         <div className="flex justify-center gap-4">
           {visibleProducts < exploreProducts.length && (
@@ -322,72 +455,19 @@ const HomePage: React.FC = () => {
             <div className="w-4 h-8 md:w-5 md:h-10 bg-secondary-2 rounded"></div>
             <span className="text-secondary-2 font-semibold text-sm md:text-base">Featured</span>
           </div>
-          <h2 className="text-2xl md:text-4xl font-inter font-semibold">New Arrival</h2>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h2 className="text-2xl md:text-4xl font-inter font-semibold">New Arrival</h2>
+            <Button variant="primary" onClick={() => navigate('/products')}>View All</Button>
+          </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 min-h-[400px] md:h-[600px]">
-          <div className="bg-gradient-to-br from-gray-800 to-black rounded flex items-end p-6 md:p-8 relative overflow-hidden min-h-[300px] md:min-h-0 group cursor-pointer hover:shadow-2xl transition-all duration-300">
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent group-hover:from-black/90 transition-colors"></div>
-            <div className="relative z-10 text-text flex flex-col gap-3 md:gap-4 transform group-hover:translate-y-[-8px] transition-transform duration-300">
-              <h3 className="text-xl md:text-2xl font-inter font-semibold">PlayStation 5</h3>
-              <p className="text-xs md:text-sm">Black and White version of the PS5 coming out on sale.</p>
-              <a 
-                href="#" 
-                onClick={(e) => { e.preventDefault(); alert('Navigating to PlayStation 5...'); }}
-                className="text-sm md:text-base font-medium underline underline-offset-4 md:underline-offset-8 hover:text-button-1 transition-colors inline-flex items-center gap-2 group-hover:gap-3"
-              >
-                Shop Now
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </a>
-            </div>
-          </div>
-          <div className="flex flex-col gap-6 md:gap-8">
-            <div className="bg-gradient-to-br from-gray-900 to-gray-700 rounded flex items-end p-6 md:p-8 h-[250px] md:h-[284px] group cursor-pointer hover:shadow-2xl transition-all duration-300">
-              <div className="text-text flex flex-col gap-3 md:gap-4 transform group-hover:translate-y-[-8px] transition-transform duration-300">
-                <h3 className="text-xl md:text-2xl font-inter font-semibold">Women's Collections</h3>
-                <p className="text-xs md:text-sm">Featured woman collections that give you another vibe.</p>
-                <a 
-                  href="#" 
-                  onClick={(e) => { e.preventDefault(); alert('Navigating to Women\'s Collections...'); }}
-                  className="text-sm md:text-base font-medium underline underline-offset-4 md:underline-offset-8 hover:text-button-1 transition-colors inline-flex items-center gap-2"
-                >
-                  Shop Now
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                </a>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4 md:gap-8">
-              <div className="bg-gradient-to-br from-gray-800 to-gray-600 rounded flex items-end p-4 md:p-6 min-h-[150px] group cursor-pointer hover:shadow-xl transition-all duration-300">
-                <div className="text-text flex flex-col gap-2 transform group-hover:translate-y-[-4px] transition-transform duration-300">
-                  <h3 className="text-lg md:text-2xl font-inter font-semibold">Speakers</h3>
-                  <p className="text-xs md:text-sm">Amazon speakers</p>
-                  <a 
-                    href="#" 
-                    onClick={(e) => { e.preventDefault(); alert('Navigating to Speakers...'); }}
-                    className="text-sm md:text-base font-medium underline hover:text-button-1 transition-colors"
-                  >
-                    Shop Now
-                  </a>
-                </div>
-              </div>
-              <div className="bg-gradient-to-br from-gray-700 to-gray-900 rounded flex items-end p-4 md:p-6 min-h-[150px] group cursor-pointer hover:shadow-xl transition-all duration-300">
-                <div className="text-text flex flex-col gap-2 transform group-hover:translate-y-[-4px] transition-transform duration-300">
-                  <h3 className="text-lg md:text-2xl font-inter font-semibold">Perfume</h3>
-                  <p className="text-xs md:text-sm">GUCCI INTENSE</p>
-                  <a 
-                    href="#" 
-                    onClick={(e) => { e.preventDefault(); alert('Navigating to Perfume...'); }}
-                    className="text-sm md:text-base font-medium underline hover:text-button-1 transition-colors"
-                  >
-                    Shop Now
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 justify-items-center">
+          {isLoadingNewArrivals ? (
+            Array.from({ length: 4 }).map((_, i) => <ProductSkeleton key={i} />)
+          ) : (
+            newArrivalsProducts.slice(0, 4).map((product, index) => (
+              <ProductCard key={product.id || index} {...product} />
+            ))
+          )}
         </div>
       </div>
 
@@ -428,4 +508,3 @@ const HomePage: React.FC = () => {
 };
 
 export default HomePage;
-

@@ -1,39 +1,55 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { mockAddresses, type Address, createAddress } from '../utils/addressMockData';
 import Modal from '../components/common/Modal';
 import Toast from '../components/common/Toast';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import { useToast } from '../hooks/useToast';
+import {
+  useGetUserAddressesQuery,
+  useAddAddressMutation,
+  useUpdateAddressMutation,
+  useDeleteAddressMutation,
+  useSetDefaultAddressMutation,
+} from '../api/userApi';
+import type { Address } from '../api/types';
 
 const AddressManagement: React.FC = () => {
-  const [addresses, setAddresses] = useState<Address[]>(mockAddresses);
+  const { data: addressesData, isLoading, refetch } = useGetUserAddressesQuery();
+  const [addAddress, { isLoading: isAdding }] = useAddAddressMutation();
+  const [updateAddress, { isLoading: isUpdating }] = useUpdateAddressMutation();
+  const [deleteAddressMutation] = useDeleteAddressMutation();
+  const [setDefaultAddress] = useSetDefaultAddressMutation();
+
+  const addresses = addressesData?.data || [];
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const { toast, showToast, hideToast } = useToast();
 
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
-    address: '',
+    street: '',
+    apartment: '',
     city: '',
     state: '',
     zipCode: '',
     country: 'United States',
-    type: 'home' as 'home' | 'work' | 'other',
+    isDefault: false,
   });
 
   const handleOpenAddModal = () => {
     setFormData({
       name: '',
       phone: '',
-      address: '',
+      street: '',
+      apartment: '',
       city: '',
       state: '',
       zipCode: '',
       country: 'United States',
-      type: 'home',
+      isDefault: addresses.length === 0,
     });
     setEditingAddress(null);
     setIsAddModalOpen(true);
@@ -43,80 +59,119 @@ const AddressManagement: React.FC = () => {
     setFormData({
       name: address.name,
       phone: address.phone,
-      address: address.address,
+      street: address.street,
+      apartment: address.apartment || '',
       city: address.city,
       state: address.state,
       zipCode: address.zipCode,
       country: address.country,
-      type: address.type,
+      isDefault: address.isDefault,
     });
     setEditingAddress(address);
     setIsAddModalOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (editingAddress) {
-      // Update existing address
-      setAddresses(addresses.map(addr =>
-        addr.id === editingAddress.id
-          ? { ...addr, ...formData }
-          : addr
-      ));
-      showToast('Address updated successfully!', 'success');
-    } else {
-      // Add new address
-      const newAddress = createAddress({
-        ...formData,
-        isDefault: addresses.length === 0,
-      });
-      setAddresses([...addresses, newAddress]);
-      showToast('Address added successfully!', 'success');
+    try {
+      if (editingAddress) {
+        // Update existing address
+        await updateAddress({
+          id: editingAddress.id,
+          name: formData.name,
+          phone: formData.phone,
+          street: formData.street,
+          apartment: formData.apartment,
+          city: formData.city,
+          state: formData.state,
+          country: formData.country,
+          zipCode: formData.zipCode,
+          isDefault: formData.isDefault,
+        }).unwrap();
+        showToast('Address updated successfully!', 'success');
+      } else {
+        // Add new address
+        await addAddress({
+          name: formData.name,
+          phone: formData.phone,
+          street: formData.street,
+          apartment: formData.apartment,
+          city: formData.city,
+          state: formData.state,
+          country: formData.country,
+          zipCode: formData.zipCode,
+          isDefault: formData.isDefault,
+        }).unwrap();
+        showToast('Address added successfully!', 'success');
+      }
+
+      setIsAddModalOpen(false);
+      refetch();
+    } catch (error: any) {
+      showToast(error?.data?.error || 'Failed to save address', 'error');
     }
-
-    setIsAddModalOpen(false);
   };
 
-  const handleSetDefault = (id: string) => {
-    setAddresses(addresses.map(addr => ({
-      ...addr,
-      isDefault: addr.id === id,
-    })));
-    showToast('Default address updated!', 'success');
+  const handleSetDefault = async (id: number) => {
+    try {
+      await setDefaultAddress(id).unwrap();
+      showToast('Default address updated!', 'success');
+      refetch();
+    } catch (error: any) {
+      showToast(error?.data?.error || 'Failed to set default address', 'error');
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (deletingId) {
-      setAddresses(addresses.filter(addr => addr.id !== deletingId));
-      showToast('Address deleted successfully!', 'success');
-      setDeletingId(null);
+      try {
+        await deleteAddressMutation(deletingId).unwrap();
+        showToast('Address deleted successfully!', 'success');
+        setDeletingId(null);
+        refetch();
+      } catch (error: any) {
+        showToast(error?.data?.error || 'Failed to delete address', 'error');
+      }
     }
   };
 
-  const getTypeIcon = (type: Address['type']) => {
-    switch (type) {
-      case 'home':
-        return (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-          </svg>
-        );
-      case 'work':
-        return (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-          </svg>
-        );
-      default:
-        return (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-        );
+  const getTypeIcon = (isDefault: boolean) => {
+    if (isDefault) {
+      return (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+      );
     }
+    return (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    );
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-[1170px] mx-auto px-4 py-8 md:py-12">
+          <div className="animate-pulse space-y-6">
+            <div className="h-8 bg-gray-200 rounded w-48"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[1, 2].map(i => (
+                <div key={i} className="bg-white rounded-lg p-6 h-48">
+                  <div className="h-4 bg-gray-200 rounded w-1/3 mb-4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -174,9 +229,11 @@ const AddressManagement: React.FC = () => {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <div className="text-gray-700">
-                      {getTypeIcon(address.type)}
+                      {getTypeIcon(address.isDefault)}
                     </div>
-                    <span className="text-sm font-medium text-gray-700 capitalize">{address.type}</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      {address.isDefault ? 'Default Address' : 'Shipping Address'}
+                    </span>
                   </div>
                   {address.isDefault && (
                     <span className="bg-secondary-2 text-white text-xs px-2 py-1 rounded-full font-medium">
@@ -187,7 +244,10 @@ const AddressManagement: React.FC = () => {
 
                 <div className="mb-4">
                   <h3 className="font-semibold text-gray-900 mb-1">{address.name}</h3>
-                  <p className="text-gray-700 text-sm">{address.address}</p>
+                  <p className="text-gray-700 text-sm">{address.street}</p>
+                  {address.apartment && (
+                    <p className="text-gray-700 text-sm">{address.apartment}</p>
+                  )}
                   <p className="text-gray-700 text-sm">
                     {address.city}, {address.state} {address.zipCode}
                   </p>
@@ -263,13 +323,25 @@ const AddressManagement: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Address *
+                Street Address *
               </label>
               <input
                 type="text"
                 required
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                value={formData.street}
+                onChange={(e) => setFormData({ ...formData, street: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary-2"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Apartment, Suite, etc.
+              </label>
+              <input
+                type="text"
+                value={formData.apartment}
+                onChange={(e) => setFormData({ ...formData, apartment: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary-2"
               />
             </div>
@@ -313,33 +385,17 @@ const AddressManagement: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Country *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.country}
-                  onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary-2"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Address Type *
-                </label>
-                <select
-                  value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value as 'home' | 'work' | 'other' })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary-2"
-                >
-                  <option value="home">Home</option>
-                  <option value="work">Work</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Country *
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.country}
+                onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary-2"
+              />
             </div>
 
             <div className="flex gap-3 pt-4">
@@ -352,9 +408,10 @@ const AddressManagement: React.FC = () => {
               </button>
               <button
                 type="submit"
-                className="flex-1 px-6 py-2.5 bg-secondary-2 text-white rounded font-medium hover:bg-red-600 transition-colors"
+                disabled={isAdding || isUpdating}
+                className="flex-1 px-6 py-2.5 bg-secondary-2 text-white rounded font-medium hover:bg-red-600 transition-colors disabled:opacity-50"
               >
-                {editingAddress ? 'Update Address' : 'Add Address'}
+                {isAdding || isUpdating ? 'Saving...' : editingAddress ? 'Update Address' : 'Add Address'}
               </button>
             </div>
           </form>
@@ -383,4 +440,3 @@ const AddressManagement: React.FC = () => {
 };
 
 export default AddressManagement;
-

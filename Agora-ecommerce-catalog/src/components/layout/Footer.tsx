@@ -4,11 +4,11 @@ const Footer: React.FC = () => {
   return (
     <footer className="bg-button text-text py-20">
       <div className="max-w-[1170px] mx-auto px-4">
-        <div className="grid grid-cols-5 gap-20 mb-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12 mb-16">
           <div className="flex flex-col gap-6">
-            <h3 className="text-2xl font-inter font-bold">Exclusive</h3>
+            <h3 className="text-xl md:text-2xl font-inter font-bold">Agora</h3>
             <div className="flex flex-col gap-4">
-              <p className="text-xl font-medium">Subscribe</p>
+              <p className="text-lg md:text-xl font-medium">Subscribe</p>
               <p className="text-base">Get 10% off your first order</p>
               <div className="flex items-center border border-text rounded px-4 py-3">
                 <input type="email" placeholder="Enter your email" className="bg-transparent outline-none text-base flex-1" />
@@ -19,7 +19,7 @@ const Footer: React.FC = () => {
             </div>
           </div>
           <div className="flex flex-col gap-6">
-            <h4 className="text-xl font-medium">Support</h4>
+            <h4 className="text-lg md:text-xl font-medium">Support</h4>
             <div className="flex flex-col gap-4 text-base">
               <p>Ethiopia , Addis Ababa.</p>
               <p>agora@gmail.com</p>
@@ -27,7 +27,7 @@ const Footer: React.FC = () => {
             </div>
           </div>
           <div className="flex flex-col gap-6">
-            <h4 className="text-xl font-medium">Account</h4>
+            <h4 className="text-lg md:text-xl font-medium">Account</h4>
             <div className="flex flex-col gap-4 text-base">
               <a href="#">My Account</a>
               <a href="#">Login / Register</a>
@@ -37,7 +37,7 @@ const Footer: React.FC = () => {
             </div>
           </div>
           <div className="flex flex-col gap-6">
-            <h4 className="text-xl font-medium">Quick Link</h4>
+            <h4 className="text-lg md:text-xl font-medium">Quick Link</h4>
             <div className="flex flex-col gap-4 text-base">
               <a href="#">Privacy Policy</a>
               <a href="#">Terms Of Use</a>
@@ -46,7 +46,7 @@ const Footer: React.FC = () => {
             </div>
           </div>
           <div className="flex flex-col gap-6">
-            <h4 className="text-xl font-medium">Download App</h4>
+            <h4 className="text-lg md:text-xl font-medium">Download App</h4>
             <div className="flex flex-col gap-2">
               <p className="text-xs opacity-70">Save $3 with App New User Only</p>
               <div className="flex gap-2">

@@ -1,23 +1,29 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { mockOrders, mockMessages } from '../../utils/adminMockData';
+import { useRBAC, type Permission } from './AdminLayout';
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+interface MenuItem {
+  name: string;
+  path: string;
+  icon: React.ReactNode;
+  badge?: string;
+  permission?: Permission;
+}
+
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const location = useLocation();
+  const { hasPermission, userRole } = useRBAC();
 
-  // Get dynamic badge counts
-  const pendingOrdersCount = mockOrders?.filter(o => o.status === 'Pending').length || 0;
-  const unreadMessagesCount = mockMessages?.filter(m => m.status === 'Unread').length || 0;
-
-  const menuItems = [
+  const menuItems: MenuItem[] = [
     {
       name: 'Dashboard',
       path: '/admin/dashboard',
+      permission: 'dashboard.view',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -27,6 +33,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     {
       name: 'Products',
       path: '/admin/products',
+      permission: 'products.view',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -34,18 +41,29 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       ),
     },
     {
+      name: 'Categories',
+      path: '/admin/categories',
+      permission: 'categories.view',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+      ),
+    },
+    {
       name: 'Orders',
       path: '/admin/orders',
+      permission: 'orders.view',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
         </svg>
       ),
-      badge: pendingOrdersCount > 0 ? String(pendingOrdersCount) : undefined,
     },
     {
       name: 'Users',
       path: '/admin/users',
+      permission: 'users.view',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -55,16 +73,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     {
       name: 'Messages',
       path: '/admin/messages',
+      permission: 'messages.view',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
         </svg>
       ),
-      badge: unreadMessagesCount > 0 ? String(unreadMessagesCount) : undefined,
     },
     {
       name: 'Settings',
       path: '/admin/settings',
+      permission: 'settings.view',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -74,7 +93,24 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     },
   ];
 
+  // Filter menu items based on permissions
+  const visibleMenuItems = menuItems.filter(item => 
+    !item.permission || hasPermission(item.permission)
+  );
+
   const isActive = (path: string) => location.pathname === path;
+
+  // Get role display name
+  const getRoleDisplayName = (role: string) => {
+    const roleNames: Record<string, string> = {
+      super_admin: 'Super Admin',
+      admin: 'Admin',
+      moderator: 'Moderator',
+      editor: 'Editor',
+      viewer: 'Viewer',
+    };
+    return roleNames[role] || role;
+  };
 
   return (
     <>
@@ -113,14 +149,30 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           </button>
         </div>
 
+        {/* Role Badge */}
+        <div className="px-6 py-3 border-b border-gray-100">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500">Your Role:</span>
+            <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
+              userRole === 'super_admin' ? 'bg-purple-100 text-purple-700' :
+              userRole === 'admin' ? 'bg-red-100 text-red-700' :
+              userRole === 'moderator' ? 'bg-blue-100 text-blue-700' :
+              userRole === 'editor' ? 'bg-green-100 text-green-700' :
+              'bg-gray-100 text-gray-700'
+            }`}>
+              {getRoleDisplayName(userRole)}
+            </span>
+          </div>
+        </div>
+
         {/* Navigation */}
-        <nav className="p-4 space-y-1.5 overflow-y-auto h-[calc(100vh-8rem)]">
+        <nav className="p-4 space-y-1.5 overflow-y-auto h-[calc(100vh-12rem)]">
           <p className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Main Menu</p>
-          {Array.isArray(menuItems) && menuItems.map((item) => (
+          {visibleMenuItems.map((item) => (
             <Link
               key={item.path}
               to={item.path}
-              onClick={() => onClose()}
+              onClick={onClose}
               className={`flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group ${
                 isActive(item.path)
                   ? 'bg-gradient-to-r from-secondary-2 to-hover-button text-white shadow-lg shadow-secondary-2/20'

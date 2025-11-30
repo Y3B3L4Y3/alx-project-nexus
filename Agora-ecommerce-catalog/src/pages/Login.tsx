@@ -2,32 +2,43 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { login } from '../redux/slices/authSlice';
+import { useLoginMutation } from '../api/authApi';
 import Button from '../components/common/Button';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [loginApi, { isLoading }] = useLoginMutation();
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const isValid = /.+@.+\..+/.test(email) && password.length >= 6;
 
-  const onSubmit: React.FormEventHandler<HTMLFormElement> = (e) => {
+  const onSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
-    if (!isValid) return;
+    if (!isValid || isLoading) return;
     
-    // Demo login - in production, this would call an API
-    const user = {
-      id: 'user-001',
-      name: email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1),
-      email: email,
-      avatar: '',
-    };
+    setErrorMessage('');
     
-    dispatch(login(user));
-    navigate('/products');
+    try {
+      const result = await loginApi({ email, password }).unwrap();
+      
+      if (result.success && result.data) {
+        dispatch(login({
+          user: result.data.user,
+          accessToken: result.data.accessToken,
+          refreshToken: result.data.refreshToken,
+        }));
+        navigate('/products');
+      }
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setErrorMessage(err?.data?.error || 'Login failed. Please check your credentials.');
+    }
   };
 
   return (
@@ -42,8 +53,22 @@ const Login: React.FC = () => {
 
         {/* Form */}
         <div className="w-full max-w-[480px] mx-auto lg:mx-0 order-1 lg:order-2">
-          <h1 className="text-2xl md:text-4xl font-inter font-semibold text-text-2">Log in to Exclusive</h1>
+          <h1 className="text-2xl md:text-4xl font-inter font-semibold text-text-2">Log in to Agora</h1>
           <p className="mt-3 text-sm md:text-base text-text-2/70">Enter your details below</p>
+
+          {/* Error Message */}
+          {errorMessage && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-red-600 text-sm">
+              {errorMessage}
+            </div>
+          )}
+
+          {/* Demo Credentials */}
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded text-blue-700 text-sm">
+            <strong>Demo credentials:</strong><br />
+            Customer: customer@example.com / Customer@123<br />
+            Admin: admin@agora.com / Admin@123
+          </div>
 
           <form onSubmit={onSubmit} className="mt-8 md:mt-10 flex flex-col gap-6">
             {/* Email */}
@@ -56,6 +81,7 @@ const Login: React.FC = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full border-b border-gray-300 px-0 py-3 text-base outline-none focus:border-secondary-2 transition-colors bg-transparent placeholder:text-gray-400"
                 autoComplete="email"
+                disabled={isLoading}
               />
             </div>
 
@@ -70,6 +96,7 @@ const Login: React.FC = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full border-b border-gray-300 px-0 py-3 pr-10 text-base outline-none focus:border-secondary-2 transition-colors bg-transparent placeholder:text-gray-400"
                   autoComplete="current-password"
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
@@ -107,8 +134,8 @@ const Login: React.FC = () => {
               </Link>
             </div>
 
-            <Button type="submit" variant="primary" className="w-full mt-2" disabled={!isValid}>
-              Log In
+            <Button type="submit" variant="primary" className="w-full mt-2" disabled={!isValid || isLoading}>
+              {isLoading ? 'Logging in...' : 'Log In'}
             </Button>
 
             {/* Divider */}
@@ -134,7 +161,7 @@ const Login: React.FC = () => {
             </button>
 
             <p className="text-sm text-center text-text-2/70 mt-6">
-              Don’t have an account?{' '}
+              Don't have an account?{' '}
               <Link to="/signup" className="text-secondary-2 font-medium hover:underline underline-offset-4">Sign up</Link>
             </p>
           </form>
@@ -145,4 +172,3 @@ const Login: React.FC = () => {
 };
 
 export default Login;
-

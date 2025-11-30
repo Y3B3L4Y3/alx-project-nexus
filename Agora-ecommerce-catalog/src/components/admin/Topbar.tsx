@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { mockOrders, mockMessages, mockProducts } from '../../utils/adminMockData';
+import { useDispatch, useSelector } from 'react-redux';
+import { useGetDashboardStatsQuery } from '../../api/adminApi';
+import { logout } from '../../redux/slices/authSlice';
+import type { RootState } from '../../redux/store';
 
 interface TopbarProps {
   onMenuClick: () => void;
@@ -8,48 +11,70 @@ interface TopbarProps {
 
 const Topbar: React.FC<TopbarProps> = ({ onMenuClick }) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
 
-  const adminUser = JSON.parse(localStorage.getItem('adminUser') || '{}');
+  // Get user from Redux state instead of localStorage
+  const { user } = useSelector((state: RootState) => state.auth);
+  const adminUser = user;
+  
+  // Fetch real dashboard stats for notifications
+  const { data: statsData } = useGetDashboardStatsQuery();
+  const stats = statsData?.data;
 
   const handleLogout = () => {
-    localStorage.removeItem('adminToken');
-    localStorage.removeItem('adminUser');
+    // Dispatch Redux logout action to clear auth state
+    dispatch(logout());
     navigate('/admin/login');
   };
 
-  // Generate dynamic notifications from mock data
-  const pendingOrders = mockOrders?.filter(o => o.status === 'Pending') || [];
-  const unreadMessages = mockMessages?.filter(m => m.status === 'Unread') || [];
-  const lowStockProducts = mockProducts?.filter(p => p.stock <= 10 && p.stock > 0) || [];
-
-  const notifications = [
-    ...pendingOrders.slice(0, 2).map((order, idx) => ({
-      id: `order-${idx}`,
-      text: `New order ${order.id} - $${order.amount}`,
-      time: order.date,
+  // Generate notifications from real data
+  const notifications = [];
+  
+  if (stats?.pendingOrders && stats.pendingOrders > 0) {
+    notifications.push({
+      id: 'pending-orders',
+      text: `${stats.pendingOrders} pending order${stats.pendingOrders > 1 ? 's' : ''} need attention`,
+      time: 'Recently',
       unread: true,
       type: 'order' as const,
       link: '/admin/orders',
-    })),
-    ...lowStockProducts.slice(0, 1).map((product, idx) => ({
-      id: `stock-${idx}`,
-      text: `Low stock alert: ${product.title} (${product.stock} left)`,
-      time: 'Just now',
+    });
+  }
+  
+  if (stats?.newOrdersToday && stats.newOrdersToday > 0) {
+    notifications.push({
+      id: 'new-orders',
+      text: `${stats.newOrdersToday} new order${stats.newOrdersToday > 1 ? 's' : ''} today`,
+      time: 'Today',
       unread: true,
-      type: 'warning' as const,
-      link: '/admin/products',
-    })),
-    ...unreadMessages.slice(0, 2).map((msg, idx) => ({
-      id: `msg-${idx}`,
-      text: `New message from ${msg.name}`,
-      time: msg.date,
+      type: 'order' as const,
+      link: '/admin/orders',
+    });
+  }
+  
+  if (stats?.newUsersToday && stats.newUsersToday > 0) {
+    notifications.push({
+      id: 'new-users',
+      text: `${stats.newUsersToday} new user${stats.newUsersToday > 1 ? 's' : ''} registered today`,
+      time: 'Today',
+      unread: true,
+      type: 'user' as const,
+      link: '/admin/users',
+    });
+  }
+  
+  if (stats?.newMessagesToday && stats.newMessagesToday > 0) {
+    notifications.push({
+      id: 'new-messages',
+      text: `${stats.newMessagesToday} new message${stats.newMessagesToday > 1 ? 's' : ''} received`,
+      time: 'Today',
       unread: true,
       type: 'user' as const,
       link: '/admin/messages',
-    })),
-  ];
+    });
+  }
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -88,7 +113,7 @@ const Topbar: React.FC<TopbarProps> = ({ onMenuClick }) => {
     }
   };
 
-  const unreadCount = Array.isArray(notifications) ? notifications.filter(n => n.unread).length : 0;
+  const unreadCount = notifications.filter(n => n.unread).length;
 
   return (
     <header className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-30">
@@ -163,12 +188,9 @@ const Topbar: React.FC<TopbarProps> = ({ onMenuClick }) => {
                       <h3 className="font-semibold text-gray-900">Notifications</h3>
                       <p className="text-xs text-gray-500">{unreadCount} unread messages</p>
                     </div>
-                    <button className="text-xs text-secondary-2 hover:text-hover-button font-medium">
-                      Mark all read
-                    </button>
                   </div>
                   <div className="max-h-80 overflow-y-auto">
-                    {Array.isArray(notifications) && notifications.length > 0 ? notifications.map((notification) => (
+                    {notifications.length > 0 ? notifications.map((notification) => (
                       <Link
                         key={notification.id}
                         to={notification.link || '#'}
@@ -188,14 +210,21 @@ const Topbar: React.FC<TopbarProps> = ({ onMenuClick }) => {
                       </Link>
                     )) : (
                       <div className="p-8 text-center text-gray-500">
-                        No notifications
+                        <svg className="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                        <p>No new notifications</p>
                       </div>
                     )}
                   </div>
                   <div className="p-3 text-center border-t border-gray-100 bg-gray-50/50">
-                    <button className="text-sm text-secondary-2 hover:text-hover-button font-medium">
-                      View all notifications
-                    </button>
+                    <Link 
+                      to="/admin/dashboard"
+                      onClick={() => setShowNotifications(false)}
+                      className="text-sm text-secondary-2 hover:text-hover-button font-medium"
+                    >
+                      View Dashboard
+                    </Link>
                   </div>
                 </div>
               </>
@@ -213,11 +242,13 @@ const Topbar: React.FC<TopbarProps> = ({ onMenuClick }) => {
             >
               <div className="w-9 h-9 bg-gradient-to-br from-secondary-2 to-hover-button rounded-xl flex items-center justify-center shadow-lg shadow-secondary-2/20">
                 <span className="text-white font-semibold text-sm">
-                  {adminUser?.name?.charAt(0) || 'A'}
+                  {adminUser?.name?.charAt(0) || adminUser?.firstName?.charAt(0) || 'A'}
                 </span>
               </div>
               <div className="hidden md:block text-left">
-                <p className="text-sm font-semibold text-gray-900 leading-tight">{adminUser?.name || 'Admin'}</p>
+                <p className="text-sm font-semibold text-gray-900 leading-tight">
+                  {adminUser?.name || `${adminUser?.firstName || ''} ${adminUser?.lastName || ''}`.trim() || 'Admin'}
+                </p>
                 <p className="text-xs text-gray-500">{adminUser?.role || 'Administrator'}</p>
               </div>
               <svg className="w-4 h-4 text-gray-400 hidden md:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -237,12 +268,14 @@ const Topbar: React.FC<TopbarProps> = ({ onMenuClick }) => {
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 bg-gradient-to-br from-secondary-2 to-hover-button rounded-xl flex items-center justify-center shadow-lg shadow-secondary-2/20">
                         <span className="text-white font-bold text-lg">
-                          {adminUser?.name?.charAt(0) || 'A'}
+                          {adminUser?.name?.charAt(0) || adminUser?.firstName?.charAt(0) || 'A'}
                         </span>
                       </div>
-                      <div>
-                        <p className="font-semibold text-gray-900">{adminUser?.name || 'Admin User'}</p>
-                        <p className="text-sm text-gray-500">{adminUser?.email || 'admin@agora.com'}</p>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-gray-900 truncate">
+                          {adminUser?.name || `${adminUser?.firstName || ''} ${adminUser?.lastName || ''}`.trim() || 'Admin User'}
+                        </p>
+                        <p className="text-sm text-gray-500 truncate">{adminUser?.email || 'admin@agora.com'}</p>
                       </div>
                     </div>
                   </div>

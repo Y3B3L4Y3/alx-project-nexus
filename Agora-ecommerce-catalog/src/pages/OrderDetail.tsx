@@ -1,25 +1,67 @@
 import React from 'react';
 import { Link, useParams, Navigate } from 'react-router-dom';
-import { getOrderById, getStatusColor } from '../utils/orderMockData';
 import { formatCurrency } from '../utils/currency';
+import { useGetOrderByIdQuery } from '../api/userApi';
+import type { Order } from '../api/types';
+
+const getStatusColor = (status: Order['status']) => {
+  switch (status) {
+    case 'delivered':
+      return 'bg-green-100 text-green-800';
+    case 'shipped':
+      return 'bg-blue-100 text-blue-800';
+    case 'processing':
+      return 'bg-yellow-100 text-yellow-800';
+    case 'pending':
+      return 'bg-orange-100 text-orange-800';
+    case 'cancelled':
+      return 'bg-red-100 text-red-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+};
 
 const OrderDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const order = id ? getOrderById(id) : undefined;
+  const { data: orderData, isLoading, error } = useGetOrderByIdQuery(id || '');
 
-  if (!order) {
+  const order = orderData?.data;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-[1170px] mx-auto px-4 py-8 md:py-12">
+          <div className="animate-pulse space-y-6">
+            <div className="h-8 bg-gray-200 rounded w-48"></div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 space-y-6">
+                <div className="bg-white rounded-lg p-6 h-48"></div>
+                <div className="bg-white rounded-lg p-6 h-64"></div>
+              </div>
+              <div className="space-y-6">
+                <div className="bg-white rounded-lg p-6 h-48"></div>
+                <div className="bg-white rounded-lg p-6 h-48"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !order) {
     return <Navigate to="/account/orders" replace />;
   }
 
   const getProgressSteps = () => {
     const steps = [
       { label: 'Order Placed', status: 'completed' },
-      { label: 'Processing', status: order.status === 'Pending' ? 'current' : 'completed' },
-      { label: 'Shipped', status: order.status === 'Shipped' ? 'current' : order.status === 'Delivered' ? 'completed' : 'pending' },
-      { label: 'Delivered', status: order.status === 'Delivered' ? 'completed' : 'pending' },
+      { label: 'Processing', status: order.status === 'pending' ? 'current' : 'completed' },
+      { label: 'Shipped', status: order.status === 'shipped' ? 'current' : order.status === 'delivered' ? 'completed' : 'pending' },
+      { label: 'Delivered', status: order.status === 'delivered' ? 'completed' : 'pending' },
     ];
 
-    if (order.status === 'Cancelled') {
+    if (order.status === 'cancelled') {
       return [
         { label: 'Order Placed', status: 'completed' },
         { label: 'Cancelled', status: 'current' },
@@ -42,14 +84,14 @@ const OrderDetail: React.FC = () => {
           <span className="text-gray-400">/</span>
           <Link to="/account/orders" className="text-gray-500 hover:text-secondary-2">Orders</Link>
           <span className="text-gray-400">/</span>
-          <span className="text-gray-900 font-medium">{order.id}</span>
+          <span className="text-gray-900 font-medium">{order.orderId}</span>
         </div>
 
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Order Details</h1>
-            <p className="text-gray-600">Order ID: <span className="font-semibold">{order.id}</span></p>
+            <p className="text-gray-600">Order ID: <span className="font-semibold">{order.orderId}</span></p>
           </div>
           <Link
             to="/account/orders"
@@ -66,7 +108,7 @@ const OrderDetail: React.FC = () => {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Order Progress */}
-            {order.status !== 'Cancelled' && (
+            {order.status !== 'cancelled' && (
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-6">Order Progress</h2>
                 <div className="relative">
@@ -125,40 +167,53 @@ const OrderDetail: React.FC = () => {
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Items</h2>
               <div className="space-y-4">
-                {order.items.map((item) => (
+                {order.items?.length > 0 ? order.items.map((item) => (
                   <div key={item.id} className="flex items-center gap-4 pb-4 border-b border-gray-100 last:border-0">
                     <img
-                      src={item.image}
-                      alt={item.productName}
+                      src={item.product?.thumbnail || '/vite.svg'}
+                      alt={item.product?.name || 'Product'}
                       className="w-20 h-20 object-cover rounded-lg bg-gray-100"
                       onError={(e) => {
                         e.currentTarget.src = '/vite.svg';
                       }}
                     />
                     <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 mb-1">{item.productName}</h3>
+                      <h3 className="font-semibold text-gray-900 mb-1">{item.product?.name || 'Product'}</h3>
                       <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
+                      {item.selectedColor && (
+                        <p className="text-sm text-gray-600">Color: {item.selectedColor}</p>
+                      )}
+                      {item.selectedSize && (
+                        <p className="text-sm text-gray-600">Size: {item.selectedSize}</p>
+                      )}
                     </div>
                     <div className="text-right">
                       <p className="font-semibold text-gray-900">{formatCurrency(item.price)}</p>
                       <p className="text-xs text-gray-500">each</p>
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <p className="text-gray-500">No items found</p>
+                )}
               </div>
             </div>
 
             {/* Shipping Address */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Shipping Address</h2>
-              <div className="text-gray-700">
-                <p className="font-medium mb-1">{order.shippingAddress.name}</p>
-                <p>{order.shippingAddress.address}</p>
-                <p>
-                  {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zipCode}
-                </p>
-                <p className="mt-2">Phone: {order.shippingAddress.phone}</p>
-              </div>
+              {order.shippingAddress ? (
+                <div className="text-gray-700">
+                  <p className="font-medium mb-1">{order.shippingAddress.name}</p>
+                  <p>{order.shippingAddress.street}</p>
+                  <p>
+                    {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zipCode}
+                  </p>
+                  <p>{order.shippingAddress.country}</p>
+                  <p className="mt-2">Phone: {order.shippingAddress.phone}</p>
+                </div>
+              ) : (
+                <p className="text-gray-500">No shipping address available</p>
+              )}
             </div>
           </div>
 
@@ -182,6 +237,12 @@ const OrderDetail: React.FC = () => {
                   <span className="text-gray-600">Tax</span>
                   <span className="font-medium text-gray-900">{formatCurrency(order.tax)}</span>
                 </div>
+                {order.discount > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Discount</span>
+                    <span className="font-medium text-green-600">-{formatCurrency(order.discount)}</span>
+                  </div>
+                )}
                 <div className="pt-3 border-t border-gray-200">
                   <div className="flex justify-between">
                     <span className="font-semibold text-gray-900">Total</span>
@@ -198,7 +259,7 @@ const OrderDetail: React.FC = () => {
                 <div>
                   <p className="text-gray-600 mb-1">Order Date</p>
                   <p className="font-medium text-gray-900">
-                    {new Date(order.date).toLocaleDateString('en-US', {
+                    {new Date(order.createdAt).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',
@@ -207,7 +268,7 @@ const OrderDetail: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-gray-600 mb-1">Status</p>
-                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium capitalize ${getStatusColor(order.status)}`}>
                     {order.status}
                   </span>
                 </div>
@@ -215,10 +276,33 @@ const OrderDetail: React.FC = () => {
                   <p className="text-gray-600 mb-1">Payment Method</p>
                   <p className="font-medium text-gray-900">{order.paymentMethod}</p>
                 </div>
+                <div>
+                  <p className="text-gray-600 mb-1">Payment Status</p>
+                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium capitalize ${
+                    order.paymentStatus === 'paid' ? 'bg-green-100 text-green-800' :
+                    order.paymentStatus === 'failed' ? 'bg-red-100 text-red-800' :
+                    order.paymentStatus === 'refunded' ? 'bg-purple-100 text-purple-800' :
+                    'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {order.paymentStatus}
+                  </span>
+                </div>
                 {order.trackingNumber && (
                   <div>
                     <p className="text-gray-600 mb-1">Tracking Number</p>
                     <p className="font-medium text-gray-900">{order.trackingNumber}</p>
+                  </div>
+                )}
+                {order.estimatedDelivery && (
+                  <div>
+                    <p className="text-gray-600 mb-1">Estimated Delivery</p>
+                    <p className="font-medium text-gray-900">
+                      {new Date(order.estimatedDelivery).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                    </p>
                   </div>
                 )}
               </div>
@@ -234,7 +318,7 @@ const OrderDetail: React.FC = () => {
                 >
                   Contact Support
                 </Link>
-                {order.status === 'Delivered' && (
+                {order.status === 'delivered' && (
                   <button className="w-full border border-gray-300 text-gray-700 px-4 py-2.5 rounded hover:bg-gray-50 transition-colors font-medium">
                     Leave a Review
                   </button>
@@ -249,4 +333,3 @@ const OrderDetail: React.FC = () => {
 };
 
 export default OrderDetail;
-

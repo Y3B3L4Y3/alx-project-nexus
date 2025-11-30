@@ -1,17 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { login } from '../../redux/slices/authSlice';
+import { useAdminLoginMutation } from '../../api/authApi';
+import type { RootState } from '../../redux/store';
 import Button from '../../components/common/Button';
 
 const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+  const [adminLogin, { isLoading }] = useAdminLoginMutation();
+  
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     rememberMe: false,
   });
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
   const [showPassword, setShowPassword] = useState(false);
+
+  // Redirect if already logged in as admin
+  useEffect(() => {
+    if (isAuthenticated && user && ['super_admin', 'admin', 'moderator', 'editor', 'viewer'].includes(user.role)) {
+      navigate('/admin/dashboard');
+    }
+  }, [isAuthenticated, user, navigate]);
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};
@@ -37,24 +51,33 @@ const AdminLogin: React.FC = () => {
 
     if (!validateForm()) return;
 
-    setIsLoading(true);
+    try {
+      const result = await adminLogin({
+        email: formData.email,
+        password: formData.password,
+      }).unwrap();
 
-    // Simulate API call
-    setTimeout(() => {
-      // Mock authentication - in production, validate against backend
-      if (formData.email === 'admin@agora.com' && formData.password === 'admin123') {
-        localStorage.setItem('adminToken', 'mock-admin-token');
-        localStorage.setItem('adminUser', JSON.stringify({ 
-          email: formData.email, 
-          name: 'Admin User',
-          role: 'admin'
+      if (result.success && result.data) {
+        // Check if user has admin privileges
+        if (!['super_admin', 'admin', 'moderator', 'editor', 'viewer'].includes(result.data.user.role)) {
+          setErrors({ general: 'You do not have permission to access the admin panel' });
+          return;
+        }
+
+        dispatch(login({
+          user: result.data.user,
+          accessToken: result.data.accessToken,
+          refreshToken: result.data.refreshToken,
         }));
+
         navigate('/admin/dashboard');
-      } else {
-        setErrors({ email: 'Invalid email or password' });
       }
-      setIsLoading(false);
-    }, 1000);
+    } catch (err: any) {
+      console.error('Admin login error:', err);
+      setErrors({ 
+        general: err?.data?.error || 'Invalid email or password. Please try again.' 
+      });
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -65,7 +88,7 @@ const AdminLogin: React.FC = () => {
     }));
     // Clear error when user starts typing
     if (errors[name as keyof typeof errors]) {
-      setErrors(prev => ({ ...prev, [name]: undefined }));
+      setErrors(prev => ({ ...prev, [name]: undefined, general: undefined }));
     }
   };
 
@@ -74,7 +97,7 @@ const AdminLogin: React.FC = () => {
       <div className="w-full max-w-md">
         {/* Logo/Brand Section */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-secondary-2 rounded-full mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-secondary-2 to-hover-button rounded-2xl mb-4 shadow-lg shadow-secondary-2/20">
             <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
@@ -84,8 +107,15 @@ const AdminLogin: React.FC = () => {
         </div>
 
         {/* Login Form */}
-        <div className="bg-white rounded-lg shadow-lg p-8">
+        <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* General Error */}
+            {errors.general && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+                {errors.general}
+              </div>
+            )}
+
             {/* Email Field */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
@@ -97,15 +127,16 @@ const AdminLogin: React.FC = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${
+                disabled={isLoading}
+                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-colors ${
                   errors.email
-                    ? 'border-secondary-2 focus:ring-secondary-2/20'
-                    : 'border-gray-300 focus:ring-secondary-2/50 focus:border-secondary-2'
+                    ? 'border-red-300 focus:ring-red-200'
+                    : 'border-gray-200 focus:ring-secondary-2/30 focus:border-secondary-2'
                 }`}
                 placeholder="admin@agora.com"
               />
               {errors.email && (
-                <p className="mt-1 text-sm text-secondary-2">{errors.email}</p>
+                <p className="mt-1 text-sm text-red-500">{errors.email}</p>
               )}
             </div>
 
@@ -121,10 +152,11 @@ const AdminLogin: React.FC = () => {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-colors pr-12 ${
+                  disabled={isLoading}
+                  className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-colors pr-12 ${
                     errors.password
-                      ? 'border-secondary-2 focus:ring-secondary-2/20'
-                      : 'border-gray-300 focus:ring-secondary-2/50 focus:border-secondary-2'
+                      ? 'border-red-300 focus:ring-red-200'
+                      : 'border-gray-200 focus:ring-secondary-2/30 focus:border-secondary-2'
                   }`}
                   placeholder="Enter your password"
                 />
@@ -146,7 +178,7 @@ const AdminLogin: React.FC = () => {
                 </button>
               </div>
               {errors.password && (
-                <p className="mt-1 text-sm text-secondary-2">{errors.password}</p>
+                <p className="mt-1 text-sm text-red-500">{errors.password}</p>
               )}
             </div>
 
@@ -193,10 +225,10 @@ const AdminLogin: React.FC = () => {
           </form>
 
           {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <p className="text-xs text-gray-600 font-medium mb-2">Demo Credentials:</p>
-            <p className="text-xs text-gray-600">Email: admin@agora.com</p>
-            <p className="text-xs text-gray-600">Password: admin123</p>
+          <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
+            <p className="text-xs text-blue-800 font-semibold mb-2">Demo Admin Credentials:</p>
+            <p className="text-xs text-blue-700">Email: admin@agora.com</p>
+            <p className="text-xs text-blue-700">Password: Admin@123</p>
           </div>
         </div>
 
@@ -218,4 +250,3 @@ const AdminLogin: React.FC = () => {
 };
 
 export default AdminLogin;
-

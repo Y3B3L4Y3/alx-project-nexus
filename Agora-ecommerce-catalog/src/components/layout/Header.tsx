@@ -18,7 +18,7 @@ const Header: React.FC = () => {
     <header className="border-b border-gray-200 bg-white sticky top-0 z-50">
       <div className="max-w-[1170px] mx-auto px-4 py-6 md:py-8 flex items-center justify-between">
         <Link to="/" className="text-2xl font-inter font-bold text-text-2 hover:text-secondary-2 transition-colors">
-          Exclusive
+          Agora
         </Link>
 
         {/* Desktop Navigation */}

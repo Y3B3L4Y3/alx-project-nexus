@@ -1,19 +1,50 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { login } from '../redux/slices/authSlice';
+import { useRegisterMutation } from '../api/authApi';
 import Button from '../components/common/Button';
 
 const Signup: React.FC = () => {
-  const [name, setName] = useState('');
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [registerApi, { isLoading }] = useRegisterMutation();
+
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const isValid = name.trim() !== '' && /.+@.+\..+/.test(email) && password.length >= 6;
+  const isValid = firstName.trim() !== '' && lastName.trim() !== '' && /.+@.+\..+/.test(email) && password.length >= 8;
 
-  const onSubmit: React.FormEventHandler<HTMLFormElement> = (e) => {
+  const onSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
-    if (!isValid) return;
-    alert(`Account created for ${name}`);
+    if (!isValid || isLoading) return;
+
+    setErrorMessage('');
+
+    try {
+      const result = await registerApi({
+        email,
+        password,
+        firstName,
+        lastName,
+      }).unwrap();
+
+      if (result.success && result.data) {
+        dispatch(login({
+          user: result.data.user,
+          accessToken: result.data.accessToken,
+          refreshToken: result.data.refreshToken,
+        }));
+        navigate('/products');
+      }
+    } catch (err: any) {
+      console.error('Registration error:', err);
+      setErrorMessage(err?.data?.error || 'Registration failed. Please try again.');
+    }
   };
 
   return (
@@ -41,17 +72,39 @@ const Signup: React.FC = () => {
           <h1 className="text-2xl md:text-4xl font-inter font-semibold text-text-2">Create an account</h1>
           <p className="mt-3 text-sm md:text-base text-text-2/70">Enter your details below</p>
 
+          {/* Error Message */}
+          {errorMessage && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-red-600 text-sm">
+              {errorMessage}
+            </div>
+          )}
+
           <form onSubmit={onSubmit} className="mt-8 md:mt-10 flex flex-col gap-6">
-            {/* Name */}
+            {/* First Name */}
             <div className="flex flex-col gap-2">
               <input
-                id="name"
+                id="firstName"
                 type="text"
-                placeholder="Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                placeholder="First Name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
                 className="w-full border-b border-gray-300 px-0 py-3 text-base outline-none focus:border-secondary-2 transition-colors bg-transparent placeholder:text-gray-400"
-                autoComplete="name"
+                autoComplete="given-name"
+                disabled={isLoading}
+              />
+            </div>
+
+            {/* Last Name */}
+            <div className="flex flex-col gap-2">
+              <input
+                id="lastName"
+                type="text"
+                placeholder="Last Name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                className="w-full border-b border-gray-300 px-0 py-3 text-base outline-none focus:border-secondary-2 transition-colors bg-transparent placeholder:text-gray-400"
+                autoComplete="family-name"
+                disabled={isLoading}
               />
             </div>
 
@@ -60,11 +113,12 @@ const Signup: React.FC = () => {
               <input
                 id="email"
                 type="email"
-                placeholder="Email or Phone Number"
+                placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full border-b border-gray-300 px-0 py-3 text-base outline-none focus:border-secondary-2 transition-colors bg-transparent placeholder:text-gray-400"
                 autoComplete="email"
+                disabled={isLoading}
               />
             </div>
 
@@ -74,11 +128,12 @@ const Signup: React.FC = () => {
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Password"
+                  placeholder="Password (min 8 chars, 1 uppercase, 1 number, 1 special)"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full border-b border-gray-300 px-0 py-3 pr-10 text-base outline-none focus:border-secondary-2 transition-colors bg-transparent placeholder:text-gray-400"
                   autoComplete="new-password"
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
@@ -100,8 +155,8 @@ const Signup: React.FC = () => {
               </div>
             </div>
 
-            <Button type="submit" variant="primary" className="w-full mt-4" disabled={!isValid}>
-              Create Account
+            <Button type="submit" variant="primary" className="w-full mt-4" disabled={!isValid || isLoading}>
+              {isLoading ? 'Creating Account...' : 'Create Account'}
             </Button>
 
             {/* Google signup */}

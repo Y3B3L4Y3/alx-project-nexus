@@ -12,15 +12,15 @@ interface SEOProps {
 }
 
 const SEO: React.FC<SEOProps> = ({
-  title = 'Exclusive - Your Premium E-Commerce Destination',
-  description = 'Shop the latest products at unbeatable prices. From electronics to fashion, find everything you need at Exclusive. Free delivery on orders over $140.',
+  title = 'Agora - Your Premium E-Commerce Destination',
+  description = 'Shop the latest products at unbeatable prices. From electronics to fashion, find everything you need at Agora. Free delivery on orders over $140.',
   keywords = 'ecommerce, online shopping, electronics, fashion, gaming, best deals, free delivery',
   image = '/assets/images/hero/hero-banner.jpg',
   url = typeof window !== 'undefined' ? window.location.href : '',
   type = 'website',
-  author = 'Exclusive E-Commerce',
+  author = 'Agora E-Commerce',
 }) => {
-  const fullTitle = title.includes('Exclusive') ? title : `${title} | Exclusive`;
+  const fullTitle = title.includes('Agora') ? title : `${title} | Agora`;
   const siteUrl = typeof window !== 'undefined' ? window.location.origin : '';
   const fullImageUrl = image.startsWith('http') ? image : `${siteUrl}${image}`;
 
@@ -42,7 +42,7 @@ const SEO: React.FC<SEOProps> = ({
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={fullImageUrl} />
-      <meta property="og:site_name" content="Exclusive" />
+      <meta property="og:site_name" content="Agora" />
 
       {/* Twitter */}
       <meta property="twitter:card" content="summary_large_image" />

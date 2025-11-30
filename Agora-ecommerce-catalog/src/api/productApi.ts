@@ -1,249 +1,175 @@
-import { createApi, fakeBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { Product, Category, ProductReview, PaginatedResponse, ApiResponse, ProductFilters } from './types';
-import { 
-  mockProducts, 
-  mockCategories, 
-  getProductById, 
-  getRelatedProducts, 
-  getProductReviews,
-  getFeaturedProducts,
-  getNewProducts,
-  searchProducts as searchMockProducts,
-} from './mock';
 
-// Simulate network delay
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+// Transform backend product to frontend format
+const transformProduct = (backendProduct: any): Product => {
+  // Ensure images array always has at least the thumbnail
+  const images = backendProduct.images && backendProduct.images.length > 0 
+    ? backendProduct.images 
+    : [backendProduct.thumbnail];
+  
+  return {
+    id: backendProduct.id,
+    name: backendProduct.name,
+    slug: backendProduct.slug,
+    description: backendProduct.description,
+    price: parseFloat(backendProduct.price),
+    originalPrice: backendProduct.original_price ? parseFloat(backendProduct.original_price) : undefined,
+    discount: backendProduct.discount || 0,
+    thumbnail: backendProduct.thumbnail,
+    images: images,
+    rating: parseFloat(backendProduct.rating) || 0,
+    reviewCount: backendProduct.review_count || 0,
+    stock: backendProduct.stock || 0,
+    category: backendProduct.category_name || backendProduct.category || '',
+    categorySlug: backendProduct.category_slug || '',
+    brand: backendProduct.brand || '',
+    tags: backendProduct.tags || [],
+    colors: backendProduct.colors || [],
+    sizes: backendProduct.sizes || [],
+    specifications: backendProduct.specifications || {},
+    isNew: Boolean(backendProduct.is_new),
+    isFeatured: Boolean(backendProduct.is_featured),
+    createdAt: backendProduct.created_at,
+  };
+};
+
+// Transform backend category to frontend format
+const transformCategory = (backendCategory: any): Category => ({
+  id: backendCategory.id,
+  name: backendCategory.name,
+  slug: backendCategory.slug,
+  icon: backendCategory.icon || '',
+  image: backendCategory.image || '',
+  productCount: backendCategory.product_count || 0,
+});
 
 export const productApi = createApi({
   reducerPath: 'productApi',
-  baseQuery: fakeBaseQuery(),
+  baseQuery: fetchBaseQuery({
+    baseUrl: 'http://localhost:5000/api',
+  }),
   tagTypes: ['Product', 'Category', 'Review'],
   endpoints: (builder) => ({
     // Get all products with optional filters
     getProducts: builder.query<PaginatedResponse<Product>, { page?: number; limit?: number; filters?: ProductFilters }>({
-      queryFn: async ({ page = 1, limit = 12, filters }) => {
-        await delay(300); // Simulate network delay
+      query: ({ page = 1, limit = 12, filters }) => {
+        const params = new URLSearchParams();
+        params.set('page', String(page));
+        params.set('limit', String(limit));
         
-        let filteredProducts = [...mockProducts];
-        
-        // Apply filters
         if (filters) {
-          if (filters.category) {
-            filteredProducts = filteredProducts.filter(p => p.categorySlug === filters.category);
-          }
-          if (filters.minPrice !== undefined) {
-            filteredProducts = filteredProducts.filter(p => p.price >= filters.minPrice!);
-          }
-          if (filters.maxPrice !== undefined) {
-            filteredProducts = filteredProducts.filter(p => p.price <= filters.maxPrice!);
-          }
-          if (filters.rating !== undefined) {
-            filteredProducts = filteredProducts.filter(p => p.rating >= filters.rating!);
-          }
-          if (filters.inStock) {
-            filteredProducts = filteredProducts.filter(p => p.stock > 0);
-          }
-          if (filters.brand) {
-            filteredProducts = filteredProducts.filter(p => p.brand === filters.brand);
-          }
-          if (filters.search) {
-            filteredProducts = searchMockProducts(filters.search);
-          }
-          
-          // Apply sorting
-          if (filters.sortBy) {
-            switch (filters.sortBy) {
-              case 'price-asc':
-                filteredProducts.sort((a, b) => a.price - b.price);
-                break;
-              case 'price-desc':
-                filteredProducts.sort((a, b) => b.price - a.price);
-                break;
-              case 'rating':
-                filteredProducts.sort((a, b) => b.rating - a.rating);
-                break;
-              case 'newest':
-                filteredProducts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-                break;
-              case 'popular':
-                filteredProducts.sort((a, b) => b.reviewCount - a.reviewCount);
-                break;
-            }
-          }
+          if (filters.category) params.set('category', filters.category);
+          if (filters.minPrice !== undefined) params.set('minPrice', String(filters.minPrice));
+          if (filters.maxPrice !== undefined) params.set('maxPrice', String(filters.maxPrice));
+          if (filters.rating !== undefined) params.set('rating', String(filters.rating));
+          if (filters.inStock) params.set('inStock', 'true');
+          if (filters.brand) params.set('brand', filters.brand);
+          if (filters.search) params.set('search', filters.search);
+          if (filters.sortBy) params.set('sortBy', filters.sortBy);
         }
         
-        // Paginate
-        const total = filteredProducts.length;
-        const totalPages = Math.ceil(total / limit);
-        const startIndex = (page - 1) * limit;
-        const paginatedProducts = filteredProducts.slice(startIndex, startIndex + limit);
-        
-        return {
-          data: {
-            success: true,
-            data: paginatedProducts,
-            pagination: {
-              page,
-              limit,
-              total,
-              totalPages,
-            },
-          },
-        };
+        return `/products?${params.toString()}`;
       },
+      transformResponse: (response: any): PaginatedResponse<Product> => ({
+        success: true,
+        data: (response.data || []).map(transformProduct),
+        pagination: response.pagination || {
+          page: 1,
+          limit: 12,
+          total: response.data?.length || 0,
+          totalPages: 1,
+        },
+      }),
       providesTags: ['Product'],
     }),
 
     // Get single product by ID
     getProductById: builder.query<ApiResponse<Product>, number>({
-      queryFn: async (id) => {
-        await delay(200);
-        
-        const product = getProductById(id);
-        
-        if (!product) {
-          return {
-            error: {
-              status: 404,
-              data: { success: false, error: 'Product not found' },
-            },
-          };
-        }
-        
-        return {
-          data: {
-            success: true,
-            data: product,
-          },
-        };
-      },
+      query: (id) => `/products/${id}`,
+      transformResponse: (response: any): ApiResponse<Product> => ({
+        success: true,
+        data: transformProduct(response.data),
+      }),
       providesTags: (_result, _error, id) => [{ type: 'Product', id }],
     }),
 
     // Get related products
     getRelatedProducts: builder.query<ApiResponse<Product[]>, { productId: number; limit?: number }>({
-      queryFn: async ({ productId, limit = 4 }) => {
-        await delay(200);
-        
-        const relatedProducts = getRelatedProducts(productId, limit);
-        
-        return {
-          data: {
-            success: true,
-            data: relatedProducts,
-          },
-        };
-      },
+      query: ({ productId, limit = 4 }) => `/products/${productId}/related?limit=${limit}`,
+      transformResponse: (response: any): ApiResponse<Product[]> => ({
+        success: true,
+        data: (response.data || []).map(transformProduct),
+      }),
     }),
 
     // Get featured products
     getFeaturedProducts: builder.query<ApiResponse<Product[]>, void>({
-      queryFn: async () => {
-        await delay(200);
-        
-        return {
-          data: {
-            success: true,
-            data: getFeaturedProducts(),
-          },
-        };
-      },
+      query: () => '/products/featured',
+      transformResponse: (response: any): ApiResponse<Product[]> => ({
+        success: true,
+        data: (response.data || []).map(transformProduct),
+      }),
+      providesTags: ['Product'],
     }),
 
     // Get new arrivals
     getNewArrivals: builder.query<ApiResponse<Product[]>, void>({
-      queryFn: async () => {
-        await delay(200);
-        
-        return {
-          data: {
-            success: true,
-            data: getNewProducts(),
-          },
-        };
-      },
+      query: () => '/products/new-arrivals',
+      transformResponse: (response: any): ApiResponse<Product[]> => ({
+        success: true,
+        data: (response.data || []).map(transformProduct),
+      }),
+      providesTags: ['Product'],
     }),
 
     // Get flash sale products (products with discount)
     getFlashSaleProducts: builder.query<ApiResponse<Product[]>, void>({
-      queryFn: async () => {
-        await delay(200);
-        
-        const flashSaleProducts = mockProducts.filter(p => p.discount && p.discount > 0);
-        
-        return {
-          data: {
-            success: true,
-            data: flashSaleProducts,
-          },
-        };
-      },
+      query: () => '/products/flash-sale',
+      transformResponse: (response: any): ApiResponse<Product[]> => ({
+        success: true,
+        data: (response.data || []).map(transformProduct),
+      }),
+      providesTags: ['Product'],
     }),
 
-    // Get best selling products (by review count)
+    // Get best selling products
     getBestSellingProducts: builder.query<ApiResponse<Product[]>, number | undefined>({
-      queryFn: async (limit) => {
-        await delay(200);
-        
-        const bestSelling = [...mockProducts]
-          .sort((a, b) => b.reviewCount - a.reviewCount)
-          .slice(0, limit ?? 8);
-        
-        return {
-          data: {
-            success: true,
-            data: bestSelling,
-          },
-        };
-      },
+      query: (limit = 8) => `/products/best-selling?limit=${limit}`,
+      transformResponse: (response: any): ApiResponse<Product[]> => ({
+        success: true,
+        data: (response.data || []).map(transformProduct),
+      }),
+      providesTags: ['Product'],
     }),
 
     // Get all categories
     getCategories: builder.query<ApiResponse<Category[]>, void>({
-      queryFn: async () => {
-        await delay(150);
-        
-        return {
-          data: {
-            success: true,
-            data: mockCategories,
-          },
-        };
-      },
+      query: () => '/categories',
+      transformResponse: (response: any): ApiResponse<Category[]> => ({
+        success: true,
+        data: (response.data || []).map(transformCategory),
+      }),
       providesTags: ['Category'],
     }),
 
     // Get product reviews
     getProductReviews: builder.query<ApiResponse<ProductReview[]>, number>({
-      queryFn: async (productId) => {
-        await delay(200);
-        
-        const reviews = getProductReviews(productId);
-        
-        return {
-          data: {
-            success: true,
-            data: reviews,
-          },
-        };
-      },
+      query: (productId) => `/products/${productId}/reviews`,
+      transformResponse: (response: any): ApiResponse<ProductReview[]> => ({
+        success: true,
+        data: response.data || [],
+      }),
       providesTags: (_result, _error, productId) => [{ type: 'Review', id: productId }],
     }),
 
     // Search products
     searchProducts: builder.query<ApiResponse<Product[]>, string>({
-      queryFn: async (query) => {
-        await delay(300);
-        
-        const results = searchMockProducts(query);
-        
-        return {
-          data: {
-            success: true,
-            data: results,
-          },
-        };
-      },
+      query: (query) => `/products/search?q=${encodeURIComponent(query)}`,
+      transformResponse: (response: any): ApiResponse<Product[]> => ({
+        success: true,
+        data: (response.data || []).map(transformProduct),
+      }),
     }),
   }),
 });
@@ -260,4 +186,3 @@ export const {
   useGetProductReviewsQuery,
   useSearchProductsQuery,
 } = productApi;
-

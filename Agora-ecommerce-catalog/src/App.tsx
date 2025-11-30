@@ -2,6 +2,7 @@ import React, { useState, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import SkipToContent from './components/common/SkipToContent';
+import ProtectedRoute from './components/common/ProtectedRoute';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 
@@ -30,6 +31,7 @@ const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'));
 const AdminLayout = lazy(() => import('./components/admin/AdminLayout'));
 const Dashboard = lazy(() => import('./pages/admin/Dashboard'));
 const AdminProducts = lazy(() => import('./pages/admin/Products'));
+const AdminCategories = lazy(() => import('./pages/admin/Categories'));
 const AdminOrders = lazy(() => import('./pages/admin/Orders'));
 const Users = lazy(() => import('./pages/admin/Users'));
 const Messages = lazy(() => import('./pages/admin/Messages'));
@@ -97,6 +99,7 @@ const App: React.FC = () => {
             <Route path="/admin/*" element={<AdminLayout />}>
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="products" element={<AdminProducts />} />
+              <Route path="categories" element={<AdminCategories />} />
               <Route path="orders" element={<AdminOrders />} />
               <Route path="users" element={<Users />} />
               <Route path="messages" element={<Messages />} />
@@ -117,12 +120,12 @@ const App: React.FC = () => {
                     <Route path="/login" element={<Login />} />
                     <Route path="/wishlist" element={<Wishlist />} />
                     <Route path="/cart" element={<Cart />} />
-                    <Route path="/checkout" element={<Checkout />} />
-                    <Route path="/account" element={<Account />} />
-                    <Route path="/account/orders" element={<Orders />} />
-                    <Route path="/account/orders/:id" element={<OrderDetail />} />
-                    <Route path="/account/addresses" element={<AddressManagement />} />
-                    <Route path="/account/settings" element={<ProfileSettings />} />
+                    <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+                    <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
+                    <Route path="/account/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+                    <Route path="/account/orders/:id" element={<ProtectedRoute><OrderDetail /></ProtectedRoute>} />
+                    <Route path="/account/addresses" element={<ProtectedRoute><AddressManagement /></ProtectedRoute>} />
+                    <Route path="/account/settings" element={<ProtectedRoute><ProfileSettings /></ProtectedRoute>} />
                     <Route path="/product/:id" element={<ProductDetail />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>

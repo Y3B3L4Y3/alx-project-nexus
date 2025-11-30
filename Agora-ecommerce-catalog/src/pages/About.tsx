@@ -90,10 +90,10 @@ const About: React.FC = () => {
               Our Story
             </h1>
             <p className="text-base text-text-2 leading-relaxed mb-6">
-            Launched in 2015, Exclusive is East Africa's premier online shopping marketplace with an active presence in Ethiopia. Supported by a wide range of tailored marketing, data, and service solutions, Exclusive has 10,500 sellers and 300 brands and serves 3 million customers across the region
+            Launched in 2015, Agora is East Africa's premier online shopping marketplace with an active presence in Ethiopia. Supported by a wide range of tailored marketing, data, and service solutions, Agora has 10,500 sellers and 300 brands and serves 3 million customers across the region
             </p>
             <p className="text-base text-text-2 leading-relaxed">
-            Exclusive has more than 1 Million products to offer, growing at a very fast rate. Exclusive offers a diverse assortment in categories ranging from consumer electronics to fashion and lifestyle."ies ranging from consumer electronics to fashion and lifestyle.
+            Agora has more than 1 Million products to offer, growing at a very fast rate. Agora offers a diverse assortment in categories ranging from consumer electronics to fashion and lifestyle.
             </p>
           </div>
           <div className="order-1 lg:order-2">

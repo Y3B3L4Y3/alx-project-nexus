@@ -2,7 +2,58 @@ import React, { useState } from 'react';
 import Button from '../../components/common/Button';
 import { useToast } from '../../hooks/useToast';
 import Toast from '../../components/common/Toast';
-import { defaultStoreSettings, defaultSocialLinks, type StoreSettings, type SocialLinks } from '../../utils/adminMockData';
+
+// Types for settings (defined locally instead of importing from mock data)
+interface StoreSettings {
+  storeName: string;
+  storeEmail: string;
+  storePhone: string;
+  storeAddress: string;
+  currency: string;
+  taxRate: string;
+  shippingFee: string;
+  freeShippingThreshold: string;
+}
+
+interface SocialLinks {
+  facebook: string;
+  twitter: string;
+  instagram: string;
+  linkedin: string;
+  youtube: string;
+}
+
+// Default values (can be loaded from localStorage or API in the future)
+const getStoredSettings = (): StoreSettings => {
+  try {
+    const stored = localStorage.getItem('storeSettings');
+    if (stored) return JSON.parse(stored);
+  } catch { /* ignore */ }
+  return {
+    storeName: 'Agora E-Commerce',
+    storeEmail: 'support@agora.com',
+    storePhone: '+1 234 567 8900',
+    storeAddress: '123 Commerce Street, Business City, BC 12345',
+    currency: 'USD',
+    taxRate: '10',
+    shippingFee: '9.99',
+    freeShippingThreshold: '100',
+  };
+};
+
+const getStoredSocialLinks = (): SocialLinks => {
+  try {
+    const stored = localStorage.getItem('socialLinks');
+    if (stored) return JSON.parse(stored);
+  } catch { /* ignore */ }
+  return {
+    facebook: '',
+    twitter: '',
+    instagram: '',
+    linkedin: '',
+    youtube: '',
+  };
+};
 
 const Settings: React.FC = () => {
   const { toasts = [], showToast, removeToast } = useToast();
@@ -10,10 +61,10 @@ const Settings: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   // Store Settings
-  const [storeSettings, setStoreSettings] = useState<StoreSettings>(defaultStoreSettings);
+  const [storeSettings, setStoreSettings] = useState<StoreSettings>(getStoredSettings);
 
   // Social Links
-  const [socialLinks, setSocialLinks] = useState<SocialLinks>(defaultSocialLinks);
+  const [socialLinks, setSocialLinks] = useState<SocialLinks>(getStoredSocialLinks);
 
   // Notification Settings
   const [notifications, setNotifications] = useState({
@@ -34,31 +85,52 @@ const Settings: React.FC = () => {
 
   const handleSaveStoreSettings = async () => {
     setIsSaving(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      // Save to localStorage for persistence
+      localStorage.setItem('storeSettings', JSON.stringify(storeSettings));
+      // TODO: Save to backend when API endpoint is available
+      await new Promise(resolve => setTimeout(resolve, 500));
+      showToast('Store settings saved successfully', 'success');
+    } catch {
+      showToast('Failed to save store settings', 'error');
+    }
     setIsSaving(false);
-    showToast('Store settings saved successfully', 'success');
   };
 
   const handleSaveSocialLinks = async () => {
     setIsSaving(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      localStorage.setItem('socialLinks', JSON.stringify(socialLinks));
+      await new Promise(resolve => setTimeout(resolve, 500));
+      showToast('Social links saved successfully', 'success');
+    } catch {
+      showToast('Failed to save social links', 'error');
+    }
     setIsSaving(false);
-    showToast('Social links saved successfully', 'success');
   };
 
   const handleSaveNotifications = async () => {
     setIsSaving(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      localStorage.setItem('notificationSettings', JSON.stringify(notifications));
+      await new Promise(resolve => setTimeout(resolve, 500));
+      showToast('Notification settings saved successfully', 'success');
+    } catch {
+      showToast('Failed to save notification settings', 'error');
+    }
     setIsSaving(false);
-    showToast('Notification settings saved successfully', 'success');
   };
 
   const handleSaveSecurity = async () => {
     setIsSaving(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      localStorage.setItem('securitySettings', JSON.stringify(security));
+      await new Promise(resolve => setTimeout(resolve, 500));
+      showToast('Security settings saved successfully', 'success');
+    } catch {
+      showToast('Failed to save security settings', 'error');
+    }
     setIsSaving(false);
-    showToast('Security settings saved successfully', 'success');
   };
 
   const handleDeleteAccount = () => {
@@ -90,25 +162,25 @@ const Settings: React.FC = () => {
 
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-inter font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-500 mt-1">Manage your store settings and preferences</p>
+        <h1 className="text-2xl md:text-3xl font-inter font-bold text-gray-900">Settings</h1>
+        <p className="text-gray-500 mt-1 text-sm md:text-base">Manage your store settings and preferences</p>
       </div>
 
       {/* Tabs */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-2">
+      <div className="bg-white rounded-xl md:rounded-2xl border border-gray-100 p-2">
         <div className="flex flex-wrap gap-2">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
+              className={`flex items-center gap-2 px-3 md:px-4 py-2 md:py-2.5 rounded-lg md:rounded-xl font-medium transition-all duration-200 text-sm md:text-base ${
                 activeTab === tab.id
                   ? 'bg-secondary-2 text-white shadow-lg shadow-secondary-2/20'
                   : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
               <span>{tab.icon}</span>
-              <span>{tab.label}</span>
+              <span className="hidden sm:inline">{tab.label}</span>
             </button>
           ))}
         </div>
@@ -116,7 +188,7 @@ const Settings: React.FC = () => {
 
       {/* Store Info Tab */}
       {activeTab === 'store' && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <div className="bg-white rounded-xl md:rounded-2xl border border-gray-100 p-4 md:p-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
               <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -129,7 +201,7 @@ const Settings: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Store Name
@@ -258,7 +330,7 @@ const Settings: React.FC = () => {
 
       {/* Social Links Tab */}
       {activeTab === 'social' && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <div className="bg-white rounded-xl md:rounded-2xl border border-gray-100 p-4 md:p-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
               <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -280,10 +352,10 @@ const Settings: React.FC = () => {
               { key: 'youtube', label: 'YouTube', icon: '📺', placeholder: 'https://youtube.com/@yourchannel' },
             ].map((social) => (
               <div key={social.key} className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-xl">
+                <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-xl flex-shrink-0">
                   {social.icon}
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     {social.label}
                   </label>
@@ -317,7 +389,7 @@ const Settings: React.FC = () => {
 
       {/* Notifications Tab */}
       {activeTab === 'notifications' && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <div className="bg-white rounded-xl md:rounded-2xl border border-gray-100 p-4 md:p-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
               <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -340,13 +412,13 @@ const Settings: React.FC = () => {
               { key: 'orderReviews', label: 'Order Reviews', description: 'Receive email when a customer leaves a review' },
             ].map((notification) => (
               <div key={notification.key} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                <div>
+                <div className="min-w-0 flex-1 mr-4">
                   <p className="font-medium text-gray-900">{notification.label}</p>
-                  <p className="text-sm text-gray-500">{notification.description}</p>
+                  <p className="text-sm text-gray-500 truncate">{notification.description}</p>
                 </div>
                 <button
                   onClick={() => setNotifications({ ...notifications, [notification.key]: !notifications[notification.key as keyof typeof notifications] })}
-                  className={`relative w-12 h-7 rounded-full transition-colors duration-200 ${
+                  className={`relative w-12 h-7 rounded-full transition-colors duration-200 flex-shrink-0 ${
                     notifications[notification.key as keyof typeof notifications] ? 'bg-secondary-2' : 'bg-gray-300'
                   }`}
                 >
@@ -379,7 +451,7 @@ const Settings: React.FC = () => {
       {/* Security Tab */}
       {activeTab === 'security' && (
         <div className="space-y-6">
-          <div className="bg-white rounded-2xl border border-gray-100 p-6">
+          <div className="bg-white rounded-xl md:rounded-2xl border border-gray-100 p-4 md:p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
                 <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -394,13 +466,13 @@ const Settings: React.FC = () => {
 
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                <div>
+                <div className="min-w-0 flex-1 mr-4">
                   <p className="font-medium text-gray-900">Two-Factor Authentication</p>
                   <p className="text-sm text-gray-500">Add an extra layer of security to your account</p>
                 </div>
                 <button
                   onClick={() => setSecurity({ ...security, twoFactorAuth: !security.twoFactorAuth })}
-                  className={`relative w-12 h-7 rounded-full transition-colors duration-200 ${
+                  className={`relative w-12 h-7 rounded-full transition-colors duration-200 flex-shrink-0 ${
                     security.twoFactorAuth ? 'bg-secondary-2' : 'bg-gray-300'
                   }`}
                 >
@@ -413,13 +485,13 @@ const Settings: React.FC = () => {
               </div>
 
               <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                <div>
+                <div className="min-w-0 flex-1 mr-4">
                   <p className="font-medium text-gray-900">Login Notifications</p>
                   <p className="text-sm text-gray-500">Get notified when someone logs into your account</p>
                 </div>
                 <button
                   onClick={() => setSecurity({ ...security, loginNotifications: !security.loginNotifications })}
-                  className={`relative w-12 h-7 rounded-full transition-colors duration-200 ${
+                  className={`relative w-12 h-7 rounded-full transition-colors duration-200 flex-shrink-0 ${
                     security.loginNotifications ? 'bg-secondary-2' : 'bg-gray-300'
                   }`}
                 >
@@ -466,7 +538,7 @@ const Settings: React.FC = () => {
           </div>
 
           {/* Danger Zone */}
-          <div className="bg-white rounded-2xl border border-red-200 p-6">
+          <div className="bg-white rounded-xl md:rounded-2xl border border-red-200 p-4 md:p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
                 <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

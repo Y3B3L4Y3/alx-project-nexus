@@ -25,3 +25,4 @@ dist-ssr
 .mypack
 ./cursor/rules/agora-rules.mdc
 USER_ACCOUNT_SYSTEM_README.md
+.env

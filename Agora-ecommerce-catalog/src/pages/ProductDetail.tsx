@@ -134,31 +134,33 @@ const ProductDetail: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-[70px] mb-20 md:mb-[140px]">
           {/* Left - Image Gallery */}
           <div className="flex flex-col-reverse md:flex-row gap-4 md:gap-[30px]">
-            {/* Thumbnails */}
-            <div className="flex md:flex-col gap-4 overflow-x-auto md:overflow-visible">
-              {product.images.map((img, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedImage(index)}
-                  className={`flex-shrink-0 w-[100px] md:w-[170px] h-[100px] md:h-[138px] bg-secondary rounded overflow-hidden transition-all ${
-                    selectedImage === index 
-                      ? 'ring-2 ring-secondary-2' 
-                      : 'hover:ring-2 hover:ring-gray-300'
-                  }`}
-                >
-                  <img 
-                    src={img} 
-                    alt={`${product.name} ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </button>
-              ))}
-            </div>
+            {/* Thumbnails - only show if more than 1 image */}
+            {(product.images?.length > 1) && (
+              <div className="flex md:flex-col gap-4 overflow-x-auto md:overflow-visible">
+                {product.images.map((img, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImage(index)}
+                    className={`flex-shrink-0 w-[100px] md:w-[170px] h-[100px] md:h-[138px] bg-secondary rounded overflow-hidden transition-all ${
+                      selectedImage === index 
+                        ? 'ring-2 ring-secondary-2' 
+                        : 'hover:ring-2 hover:ring-gray-300'
+                    }`}
+                  >
+                    <img 
+                      src={img} 
+                      alt={`${product.name} ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Main Image */}
             <div className="flex-1 bg-secondary rounded overflow-hidden h-[300px] md:h-[600px]">
               <img 
-                src={product.images[selectedImage]} 
+                src={product.images?.[selectedImage] || product.thumbnail} 
                 alt={product.name}
                 className="w-full h-full object-contain p-4"
               />

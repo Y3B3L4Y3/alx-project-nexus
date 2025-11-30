@@ -1,13 +1,23 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import ProductCard from '../components/product/ProductCard';
-import { mockProducts } from '../api/mock/products';
+import { useGetProductsQuery, useGetCategoriesQuery } from '../api/productApi';
 
 // Filter types
 type SortOption = 'default' | 'price-asc' | 'price-desc' | 'rating-desc' | 'newest';
 type RatingFilter = 'all' | '4+' | '3+' | '2+';
 
-const PRODUCTS_PER_PAGE = 8;
+const PRODUCTS_PER_PAGE = 12;
+
+// Loading skeleton for product cards
+const ProductSkeleton: React.FC = () => (
+  <div className="animate-pulse">
+    <div className="bg-gray-200 aspect-square rounded-lg mb-4"></div>
+    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+    <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+    <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+  </div>
+);
 
 const Products: React.FC = () => {
   // Filter states
@@ -17,76 +27,69 @@ const Products: React.FC = () => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(PRODUCTS_PER_PAGE);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Get unique categories from products
-  const categories = useMemo(() => {
-    const uniqueCategories = [...new Set(mockProducts.map(p => p.category))];
-    return uniqueCategories.map(cat => ({
-      name: cat,
-      slug: cat.toLowerCase().replace(/\s+/g, '-'),
-      count: mockProducts.filter(p => p.category === cat).length
-    }));
-  }, []);
-
-  // Filter and sort products
-  const filteredProducts = useMemo(() => {
-    let result = [...mockProducts];
-
-    // Search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(p =>
-        p.name.toLowerCase().includes(query) ||
-        p.category.toLowerCase().includes(query) ||
-        p.brand?.toLowerCase().includes(query)
-      );
-    }
-
-    // Category filter
+  // Build API filters
+  const apiFilters = useMemo(() => {
+    const filters: Record<string, any> = {};
+    
     if (selectedCategory !== 'all') {
-      result = result.filter(p => p.category === selectedCategory);
+      filters.category = selectedCategory;
     }
-
-    // Price range filter
-    result = result.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
-
-    // Rating filter
+    if (priceRange[0] > 0) {
+      filters.minPrice = priceRange[0];
+    }
+    if (priceRange[1] < 2000) {
+      filters.maxPrice = priceRange[1];
+    }
     if (ratingFilter !== 'all') {
-      const minRating = parseInt(ratingFilter);
-      result = result.filter(p => p.rating >= minRating);
+      filters.rating = parseInt(ratingFilter);
     }
-
-    // Sorting
-    switch (sortBy) {
-      case 'price-asc':
-        result.sort((a, b) => a.price - b.price);
-        break;
-      case 'price-desc':
-        result.sort((a, b) => b.price - a.price);
-        break;
-      case 'rating-desc':
-        result.sort((a, b) => b.rating - a.rating);
-        break;
-      case 'newest':
-        result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        break;
-      default:
-        break;
+    if (searchQuery) {
+      filters.search = searchQuery;
     }
+    if (sortBy !== 'default') {
+      // Map frontend sort options to backend
+      const sortMap: Record<string, string> = {
+        'price-asc': 'price_asc',
+        'price-desc': 'price_desc',
+        'rating-desc': 'rating_desc',
+        'newest': 'newest',
+      };
+      filters.sortBy = sortMap[sortBy] || sortBy;
+    }
+    
+    return filters;
+  }, [selectedCategory, priceRange, ratingFilter, searchQuery, sortBy]);
 
-    return result;
-  }, [selectedCategory, sortBy, ratingFilter, priceRange, searchQuery]);
+  // Fetch products from API
+  const { 
+    data: productsData, 
+    isLoading: isLoadingProducts, 
+    isFetching,
+    error: productsError 
+  } = useGetProductsQuery({
+    page: currentPage,
+    limit: PRODUCTS_PER_PAGE,
+    filters: apiFilters,
+  });
 
-  // Products to display (paginated)
-  const displayedProducts = useMemo(() => {
-    return filteredProducts.slice(0, visibleCount);
-  }, [filteredProducts, visibleCount]);
+  // Fetch categories from API
+  const { 
+    data: categoriesData, 
+    isLoading: isLoadingCategories 
+  } = useGetCategoriesQuery();
 
-  const hasMoreProducts = visibleCount < filteredProducts.length;
+  const products = productsData?.data || [];
+  const pagination = productsData?.pagination;
+  const categories = categoriesData?.data || [];
+  const totalProducts = pagination?.total || products.length;
+  const totalPages = pagination?.totalPages || 1;
 
   const handleLoadMore = () => {
-    setVisibleCount(prev => prev + PRODUCTS_PER_PAGE);
+    if (currentPage < totalPages) {
+      setCurrentPage(prev => prev + 1);
+    }
   };
 
   const clearFilters = () => {
@@ -95,11 +98,19 @@ const Products: React.FC = () => {
     setRatingFilter('all');
     setPriceRange([0, 2000]);
     setSearchQuery('');
-    setVisibleCount(PRODUCTS_PER_PAGE);
+    setCurrentPage(1);
   };
 
   const hasActiveFilters = selectedCategory !== 'all' || sortBy !== 'default' || 
     ratingFilter !== 'all' || priceRange[0] !== 0 || priceRange[1] !== 2000 || searchQuery;
+
+  const hasMoreProducts = currentPage < totalPages;
+
+  // Reset page when filters change
+  const handleFilterChange = (filterFn: () => void) => {
+    filterFn();
+    setCurrentPage(1);
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -120,7 +131,7 @@ const Products: React.FC = () => {
             </div>
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-inter font-semibold text-text-2">All Products</h1>
             <p className="text-gray-500 text-sm">
-              Showing {displayedProducts.length} of {filteredProducts.length} products
+              {isLoadingProducts ? 'Loading products...' : `Showing ${products.length} of ${totalProducts} products`}
             </p>
           </div>
 
@@ -149,10 +160,7 @@ const Products: React.FC = () => {
                     type="text"
                     placeholder="Search products..."
                     value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      setVisibleCount(PRODUCTS_PER_PAGE);
-                    }}
+                    onChange={(e) => handleFilterChange(() => setSearchQuery(e.target.value))}
                     className="w-full px-3 sm:px-4 py-2 pr-10 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-secondary-2 focus:border-transparent"
                   />
                   <svg className="w-4 h-4 sm:w-5 sm:h-5 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -165,37 +173,41 @@ const Products: React.FC = () => {
               <div>
                 <h3 className="font-semibold text-text-2 mb-2 sm:mb-3 text-sm sm:text-base">Categories</h3>
                 <div className="space-y-1.5 sm:space-y-2 max-h-[200px] sm:max-h-[250px] overflow-y-auto pr-2">
-                  <button
-                    onClick={() => {
-                      setSelectedCategory('all');
-                      setVisibleCount(PRODUCTS_PER_PAGE);
-                    }}
-                    className={`w-full text-left px-2.5 sm:px-3 py-1.5 sm:py-2 rounded transition-colors flex justify-between items-center text-sm ${
-                      selectedCategory === 'all'
-                        ? 'bg-secondary-2 text-white'
-                        : 'hover:bg-gray-200 text-text-2'
-                    }`}
-                  >
-                    <span>All Categories</span>
-                    <span className="text-xs sm:text-sm opacity-70">({mockProducts.length})</span>
-                  </button>
-                  {categories.map((cat) => (
-                    <button
-                      key={cat.slug}
-                      onClick={() => {
-                        setSelectedCategory(cat.name);
-                        setVisibleCount(PRODUCTS_PER_PAGE);
-                      }}
-                      className={`w-full text-left px-2.5 sm:px-3 py-1.5 sm:py-2 rounded transition-colors flex justify-between items-center text-sm ${
-                        selectedCategory === cat.name
-                          ? 'bg-secondary-2 text-white'
-                          : 'hover:bg-gray-200 text-text-2'
-                      }`}
-                    >
-                      <span>{cat.name}</span>
-                      <span className="text-xs sm:text-sm opacity-70">({cat.count})</span>
-                    </button>
-                  ))}
+                  {isLoadingCategories ? (
+                    <div className="space-y-2">
+                      {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="h-8 bg-gray-200 rounded animate-pulse"></div>
+                      ))}
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => handleFilterChange(() => setSelectedCategory('all'))}
+                        className={`w-full text-left px-2.5 sm:px-3 py-1.5 sm:py-2 rounded transition-colors flex justify-between items-center text-sm ${
+                          selectedCategory === 'all'
+                            ? 'bg-secondary-2 text-white'
+                            : 'hover:bg-gray-200 text-text-2'
+                        }`}
+                      >
+                        <span>All Categories</span>
+                        <span className="text-xs sm:text-sm opacity-70">({totalProducts})</span>
+                      </button>
+                      {categories.map((cat) => (
+                        <button
+                          key={cat.id}
+                          onClick={() => handleFilterChange(() => setSelectedCategory(cat.slug))}
+                          className={`w-full text-left px-2.5 sm:px-3 py-1.5 sm:py-2 rounded transition-colors flex justify-between items-center text-sm ${
+                            selectedCategory === cat.slug
+                              ? 'bg-secondary-2 text-white'
+                              : 'hover:bg-gray-200 text-text-2'
+                          }`}
+                        >
+                          <span>{cat.name}</span>
+                          <span className="text-xs sm:text-sm opacity-70">({cat.productCount})</span>
+                        </button>
+                      ))}
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -207,10 +219,7 @@ const Products: React.FC = () => {
                     <input
                       type="number"
                       value={priceRange[0]}
-                      onChange={(e) => {
-                        setPriceRange([parseInt(e.target.value) || 0, priceRange[1]]);
-                        setVisibleCount(PRODUCTS_PER_PAGE);
-                      }}
+                      onChange={(e) => handleFilterChange(() => setPriceRange([parseInt(e.target.value) || 0, priceRange[1]]))}
                       className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-secondary-2"
                       placeholder="Min"
                     />
@@ -218,10 +227,7 @@ const Products: React.FC = () => {
                     <input
                       type="number"
                       value={priceRange[1]}
-                      onChange={(e) => {
-                        setPriceRange([priceRange[0], parseInt(e.target.value) || 2000]);
-                        setVisibleCount(PRODUCTS_PER_PAGE);
-                      }}
+                      onChange={(e) => handleFilterChange(() => setPriceRange([priceRange[0], parseInt(e.target.value) || 2000]))}
                       className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-secondary-2"
                       placeholder="Max"
                     />
@@ -231,10 +237,7 @@ const Products: React.FC = () => {
                     min="0"
                     max="2000"
                     value={priceRange[1]}
-                    onChange={(e) => {
-                      setPriceRange([priceRange[0], parseInt(e.target.value)]);
-                      setVisibleCount(PRODUCTS_PER_PAGE);
-                    }}
+                    onChange={(e) => handleFilterChange(() => setPriceRange([priceRange[0], parseInt(e.target.value)]))}
                     className="w-full accent-secondary-2"
                   />
                   <div className="flex justify-between text-xs text-gray-500">
@@ -249,7 +252,7 @@ const Products: React.FC = () => {
                 <h3 className="font-semibold text-text-2 mb-2 sm:mb-3 text-sm sm:text-base">Sort By</h3>
                 <select
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as SortOption)}
+                  onChange={(e) => handleFilterChange(() => setSortBy(e.target.value as SortOption))}
                   className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary-2 bg-white text-sm"
                 >
                   <option value="default">Default</option>
@@ -267,10 +270,7 @@ const Products: React.FC = () => {
                   {(['all', '4+', '3+', '2+'] as RatingFilter[]).map((rating) => (
                     <button
                       key={rating}
-                      onClick={() => {
-                        setRatingFilter(rating);
-                        setVisibleCount(PRODUCTS_PER_PAGE);
-                      }}
+                      onClick={() => handleFilterChange(() => setRatingFilter(rating))}
                       className={`w-full text-left px-2.5 sm:px-3 py-1.5 sm:py-2 rounded transition-colors flex items-center gap-2 text-sm ${
                         ratingFilter === rating
                           ? 'bg-secondary-2 text-white'
@@ -315,8 +315,8 @@ const Products: React.FC = () => {
               <div className="flex flex-wrap gap-2 mb-4 sm:mb-6">
                 {selectedCategory !== 'all' && (
                   <span className="inline-flex items-center gap-1 bg-gray-100 px-2.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
-                    {selectedCategory}
-                    <button onClick={() => { setSelectedCategory('all'); setVisibleCount(PRODUCTS_PER_PAGE); }} className="hover:text-secondary-2">
+                    {categories.find(c => c.slug === selectedCategory)?.name || selectedCategory}
+                    <button onClick={() => handleFilterChange(() => setSelectedCategory('all'))} className="hover:text-secondary-2">
                       <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
@@ -326,7 +326,7 @@ const Products: React.FC = () => {
                 {sortBy !== 'default' && (
                   <span className="inline-flex items-center gap-1 bg-gray-100 px-2.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
                     Sort: {sortBy.replace('-', ' → ')}
-                    <button onClick={() => setSortBy('default')} className="hover:text-secondary-2">
+                    <button onClick={() => handleFilterChange(() => setSortBy('default'))} className="hover:text-secondary-2">
                       <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
@@ -336,7 +336,7 @@ const Products: React.FC = () => {
                 {ratingFilter !== 'all' && (
                   <span className="inline-flex items-center gap-1 bg-gray-100 px-2.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
                     {ratingFilter} Stars
-                    <button onClick={() => { setRatingFilter('all'); setVisibleCount(PRODUCTS_PER_PAGE); }} className="hover:text-secondary-2">
+                    <button onClick={() => handleFilterChange(() => setRatingFilter('all'))} className="hover:text-secondary-2">
                       <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
@@ -346,7 +346,7 @@ const Products: React.FC = () => {
                 {searchQuery && (
                   <span className="inline-flex items-center gap-1 bg-gray-100 px-2.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
                     Search: "{searchQuery}"
-                    <button onClick={() => { setSearchQuery(''); setVisibleCount(PRODUCTS_PER_PAGE); }} className="hover:text-secondary-2">
+                    <button onClick={() => handleFilterChange(() => setSearchQuery(''))} className="hover:text-secondary-2">
                       <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
@@ -356,8 +356,36 @@ const Products: React.FC = () => {
               </div>
             )}
 
+            {/* Error State */}
+            {productsError && (
+              <div className="text-center py-12 sm:py-16">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+                  <svg className="w-10 h-10 sm:w-12 sm:h-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">Failed to Load Products</h3>
+                <p className="text-gray-600 mb-6 text-sm sm:text-base">There was an error loading products. Please try again.</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="bg-secondary-2 text-white px-5 sm:px-6 py-2 rounded hover:bg-red-600 transition-colors font-medium text-sm sm:text-base"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+
+            {/* Loading State */}
+            {isLoadingProducts && !productsError && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
+                {[...Array(8)].map((_, i) => (
+                  <ProductSkeleton key={i} />
+                ))}
+              </div>
+            )}
+
             {/* Product Grid */}
-            {filteredProducts.length === 0 ? (
+            {!isLoadingProducts && !productsError && products.length === 0 ? (
               <div className="text-center py-12 sm:py-16">
                 <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
                   <svg className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -373,10 +401,10 @@ const Products: React.FC = () => {
                   Clear All Filters
                 </button>
               </div>
-            ) : (
+            ) : !isLoadingProducts && !productsError && (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
-                  {displayedProducts.map((product, index) => (
+                <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6 ${isFetching ? 'opacity-50' : ''}`}>
+                  {products.map((product, index) => (
                     <div 
                       key={product.id} 
                       className="flex justify-center animate-fade-in"
@@ -402,20 +430,33 @@ const Products: React.FC = () => {
                   <div className="flex justify-center mt-8 sm:mt-12">
                     <button 
                       onClick={handleLoadMore}
-                      className="bg-secondary-2 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded hover:bg-red-600 transition-colors font-medium text-sm sm:text-base flex items-center gap-2"
+                      disabled={isFetching}
+                      className="bg-secondary-2 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded hover:bg-red-600 transition-colors font-medium text-sm sm:text-base flex items-center gap-2 disabled:opacity-50"
                     >
-                      <span>Load More Products</span>
-                      <span className="text-xs bg-white/20 px-2 py-0.5 rounded">
-                        {filteredProducts.length - visibleCount} left
-                      </span>
+                      {isFetching ? (
+                        <>
+                          <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          <span>Loading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Load More Products</span>
+                          <span className="text-xs bg-white/20 px-2 py-0.5 rounded">
+                            Page {currentPage} of {totalPages}
+                          </span>
+                        </>
+                      )}
                     </button>
                   </div>
                 )}
 
                 {/* All Products Loaded Message */}
-                {!hasMoreProducts && filteredProducts.length > PRODUCTS_PER_PAGE && (
+                {!hasMoreProducts && products.length > 0 && (
                   <div className="text-center mt-8 sm:mt-12 text-gray-500 text-sm">
-                    You've viewed all {filteredProducts.length} products
+                    You've viewed all {totalProducts} products
                   </div>
                 )}
               </>
