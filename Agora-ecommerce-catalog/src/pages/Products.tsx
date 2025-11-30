@@ -1,11 +1,13 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import ProductCard from '../components/product/ProductCard';
 import { useGetProductsQuery, useGetCategoriesQuery } from '../api/productApi';
+import type { Product } from '../api/types';
 
 // Filter types
 type SortOption = 'default' | 'price-asc' | 'price-desc' | 'rating-desc' | 'newest';
 type RatingFilter = 'all' | '4+' | '3+' | '2+';
+type ViewMode = 'pagination' | 'infinite';
 
 const PRODUCTS_PER_PAGE = 12;
 
@@ -28,6 +30,9 @@ const Products: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [viewMode, setViewMode] = useState<ViewMode>('pagination');
+  const [accumulatedProducts, setAccumulatedProducts] = useState<Product[]>([]);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   // Build API filters
   const apiFilters = useMemo(() => {
@@ -51,9 +56,9 @@ const Products: React.FC = () => {
     if (sortBy !== 'default') {
       // Map frontend sort options to backend
       const sortMap: Record<string, string> = {
-        'price-asc': 'price_asc',
-        'price-desc': 'price_desc',
-        'rating-desc': 'rating_desc',
+        'price-asc': 'price-asc',
+        'price-desc': 'price-desc',
+        'rating-desc': 'rating',
         'newest': 'newest',
       };
       filters.sortBy = sortMap[sortBy] || sortBy;
@@ -80,16 +85,105 @@ const Products: React.FC = () => {
     isLoading: isLoadingCategories 
   } = useGetCategoriesQuery();
 
-  const products = productsData?.data || [];
+  const fetchedProducts = productsData?.data || [];
   const pagination = productsData?.pagination;
   const categories = categoriesData?.data || [];
-  const totalProducts = pagination?.total || products.length;
+  const totalProducts = pagination?.total || fetchedProducts.length;
   const totalPages = pagination?.totalPages || 1;
 
-  const handleLoadMore = () => {
-    if (currentPage < totalPages) {
+  // For infinite scroll, accumulate products; for pagination, use fetched products directly
+  const products = viewMode === 'infinite' ? accumulatedProducts : fetchedProducts;
+
+  // Accumulate products for infinite scroll mode
+  useEffect(() => {
+    if (viewMode === 'infinite' && fetchedProducts.length > 0) {
+      if (currentPage === 1) {
+        setAccumulatedProducts(fetchedProducts);
+      } else {
+        setAccumulatedProducts(prev => {
+          // Avoid duplicates
+          const existingIds = new Set(prev.map(p => p.id));
+          const newProducts = fetchedProducts.filter(p => !existingIds.has(p.id));
+          return [...prev, ...newProducts];
+        });
+      }
+    }
+  }, [fetchedProducts, currentPage, viewMode]);
+
+  // Reset accumulated products when filters change
+  useEffect(() => {
+    if (viewMode === 'infinite') {
+      setAccumulatedProducts([]);
+    }
+  }, [selectedCategory, priceRange, ratingFilter, searchQuery, sortBy, viewMode]);
+
+  const handleLoadMore = useCallback(() => {
+    if (currentPage < totalPages && !isFetching) {
       setCurrentPage(prev => prev + 1);
     }
+  }, [currentPage, totalPages, isFetching]);
+
+  // Infinite scroll with Intersection Observer
+  useEffect(() => {
+    if (viewMode !== 'infinite') return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting && !isFetching && currentPage < totalPages) {
+          handleLoadMore();
+        }
+      },
+      { threshold: 0.1, rootMargin: '100px' }
+    );
+
+    const currentRef = loadMoreRef.current;
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+    };
+  }, [viewMode, isFetching, currentPage, totalPages, handleLoadMore]);
+
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    const maxVisible = 5;
+    
+    if (totalPages <= maxVisible + 2) {
+      // Show all pages if total is small
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Always show first page
+      pages.push(1);
+      
+      if (currentPage > 3) {
+        pages.push('...');
+      }
+      
+      // Show pages around current
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+      
+      if (currentPage < totalPages - 2) {
+        pages.push('...');
+      }
+      
+      // Always show last page
+      pages.push(totalPages);
+    }
+    
+    return pages;
   };
 
   const clearFilters = () => {
@@ -110,6 +204,16 @@ const Products: React.FC = () => {
   const handleFilterChange = (filterFn: () => void) => {
     filterFn();
     setCurrentPage(1);
+    if (viewMode === 'infinite') {
+      setAccumulatedProducts([]);
+    }
+  };
+
+  // Handle view mode change
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode);
+    setCurrentPage(1);
+    setAccumulatedProducts([]);
   };
 
   return (
@@ -135,17 +239,49 @@ const Products: React.FC = () => {
             </p>
           </div>
 
-          {/* Mobile Filter Toggle */}
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="lg:hidden flex items-center justify-center gap-2 bg-secondary-2 text-white px-4 py-2.5 rounded hover:bg-red-600 transition-colors w-full sm:w-auto"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-            </svg>
-            {showFilters ? 'Hide Filters' : 'Show Filters'}
-            {hasActiveFilters && <span className="bg-white text-secondary-2 text-xs px-2 py-0.5 rounded-full ml-1">Active</span>}
-          </button>
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            {/* View Mode Toggle */}
+            <div className="flex items-center bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => handleViewModeChange('pagination')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                  viewMode === 'pagination'
+                    ? 'bg-white text-secondary-2 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                </svg>
+                Pages
+              </button>
+              <button
+                onClick={() => handleViewModeChange('infinite')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                  viewMode === 'infinite'
+                    ? 'bg-white text-secondary-2 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+                Scroll
+              </button>
+            </div>
+
+            {/* Mobile Filter Toggle */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="lg:hidden flex items-center justify-center gap-2 bg-secondary-2 text-white px-4 py-2.5 rounded hover:bg-red-600 transition-colors w-full sm:w-auto"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+              {showFilters ? 'Hide Filters' : 'Show Filters'}
+              {hasActiveFilters && <span className="bg-white text-secondary-2 text-xs px-2 py-0.5 rounded-full ml-1">Active</span>}
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
@@ -425,38 +561,105 @@ const Products: React.FC = () => {
                   ))}
                 </div>
 
-                {/* Load More Button */}
-                {hasMoreProducts && (
-                  <div className="flex justify-center mt-8 sm:mt-12">
-                    <button 
-                      onClick={handleLoadMore}
-                      disabled={isFetching}
-                      className="bg-secondary-2 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded hover:bg-red-600 transition-colors font-medium text-sm sm:text-base flex items-center gap-2 disabled:opacity-50"
-                    >
-                      {isFetching ? (
-                        <>
-                          <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                          </svg>
-                          <span>Loading...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>Load More Products</span>
-                          <span className="text-xs bg-white/20 px-2 py-0.5 rounded">
-                            Page {currentPage} of {totalPages}
-                          </span>
-                        </>
-                      )}
-                    </button>
+                {/* Pagination Mode - Numbered Pages */}
+                {viewMode === 'pagination' && totalPages > 1 && (
+                  <div className="flex flex-col items-center gap-4 mt-8 sm:mt-12">
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      {/* Previous Button */}
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1 || isFetching}
+                        className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
+
+                      {/* Page Numbers */}
+                      {getPageNumbers().map((page, index) => (
+                        <React.Fragment key={index}>
+                          {page === '...' ? (
+                            <span className="px-2 text-gray-400">...</span>
+                          ) : (
+                            <button
+                              onClick={() => setCurrentPage(page as number)}
+                              disabled={isFetching}
+                              className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg font-medium text-sm sm:text-base transition-colors ${
+                                currentPage === page
+                                  ? 'bg-secondary-2 text-white'
+                                  : 'border border-gray-300 hover:bg-gray-100 text-gray-700'
+                              } disabled:opacity-50`}
+                            >
+                              {page}
+                            </button>
+                          )}
+                        </React.Fragment>
+                      ))}
+
+                      {/* Next Button */}
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        disabled={currentPage === totalPages || isFetching}
+                        className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {/* Page Info */}
+                    <p className="text-sm text-gray-500">
+                      Page {currentPage} of {totalPages} • Showing {((currentPage - 1) * PRODUCTS_PER_PAGE) + 1}-{Math.min(currentPage * PRODUCTS_PER_PAGE, totalProducts)} of {totalProducts} products
+                    </p>
                   </div>
+                )}
+
+                {/* Infinite Scroll Mode - Loading Trigger */}
+                {viewMode === 'infinite' && (
+                  <>
+                    {/* Intersection Observer Target */}
+                    <div ref={loadMoreRef} className="h-4" />
+                    
+                    {/* Loading Indicator */}
+                    {isFetching && hasMoreProducts && (
+                      <div className="flex justify-center items-center gap-3 py-8">
+                        <svg className="animate-spin h-6 w-6 text-secondary-2" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        <span className="text-gray-600 text-sm">Loading more products...</span>
+                      </div>
+                    )}
+
+                    {/* Progress Bar */}
+                    {products.length > 0 && (
+                      <div className="mt-6">
+                        <div className="flex justify-between text-sm text-gray-500 mb-2">
+                          <span>Showing {products.length} of {totalProducts} products</span>
+                          <span>{Math.round((products.length / totalProducts) * 100)}%</span>
+                        </div>
+                        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-secondary-2 rounded-full transition-all duration-300"
+                            style={{ width: `${(products.length / totalProducts) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
 
                 {/* All Products Loaded Message */}
                 {!hasMoreProducts && products.length > 0 && (
-                  <div className="text-center mt-8 sm:mt-12 text-gray-500 text-sm">
-                    You've viewed all {totalProducts} products
+                  <div className="text-center mt-8 sm:mt-12">
+                    <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-full text-sm">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      You've viewed all {totalProducts} products
+                    </div>
                   </div>
                 )}
               </>

@@ -5,8 +5,8 @@ import { setTokens, logout } from '../redux/slices/authSlice';
 
 const mutex = new Mutex();
 
-// API base URL: uses environment variable in development, relative path in production
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+// API base URL: uses environment variable in development, backend server URL as fallback
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const baseQuery = fetchBaseQuery({
   baseUrl: API_BASE_URL,

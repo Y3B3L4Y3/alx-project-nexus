@@ -1,6 +1,9 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { Product, Category, ProductReview, PaginatedResponse, ApiResponse, ProductFilters } from './types';
 
+// API base URL: uses environment variable in development, backend server URL as fallback
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 // Transform backend product to frontend format
 const transformProduct = (backendProduct: any): Product => {
   // Ensure images array always has at least the thumbnail
@@ -41,13 +44,13 @@ const transformCategory = (backendCategory: any): Category => ({
   slug: backendCategory.slug,
   icon: backendCategory.icon || '',
   image: backendCategory.image || '',
-  productCount: backendCategory.product_count || 0,
+  productCount: backendCategory.productCount || 0,
 });
 
 export const productApi = createApi({
   reducerPath: 'productApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: 'http://localhost:5000/api',
+    baseUrl: API_BASE_URL,
   }),
   tagTypes: ['Product', 'Category', 'Review'],
   endpoints: (builder) => ({
