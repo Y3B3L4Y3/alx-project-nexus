@@ -24,7 +24,7 @@ export const getCart = asyncHandler(async (req: AuthRequest, res: Response) => {
 });
 
 // Add to cart
-export const addToCart = asyncHandler(async (req: AuthRequest, res: Response) => {
+export const addToCart = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
   if (!req.user) {
     throw new AppError('Authentication required', 401);
   }
@@ -34,11 +34,13 @@ export const addToCart = asyncHandler(async (req: AuthRequest, res: Response) =>
   // Check if product exists and has stock
   const product = await ProductModel.findById(productId);
   if (!product) {
-    return sendNotFound(res, 'Product');
+    sendNotFound(res, 'Product');
+    return;
   }
 
   if (product.stock < quantity) {
-    return sendError(res, 'Insufficient stock', 400);
+    sendError(res, 'Insufficient stock', 400);
+    return;
   }
 
   await CartModel.addItem({
@@ -54,7 +56,7 @@ export const addToCart = asyncHandler(async (req: AuthRequest, res: Response) =>
 });
 
 // Update cart item
-export const updateCartItem = asyncHandler(async (req: AuthRequest, res: Response) => {
+export const updateCartItem = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
   if (!req.user) {
     throw new AppError('Authentication required', 401);
   }
@@ -63,12 +65,14 @@ export const updateCartItem = asyncHandler(async (req: AuthRequest, res: Respons
   const { quantity } = req.body;
 
   if (quantity < 1) {
-    return sendError(res, 'Quantity must be at least 1', 400);
+    sendError(res, 'Quantity must be at least 1', 400);
+    return;
   }
 
   const updated = await CartModel.updateQuantity(itemId, req.user.userId, quantity);
   if (!updated) {
-    return sendNotFound(res, 'Cart item');
+    sendNotFound(res, 'Cart item');
+    return;
   }
 
   const items = await CartModel.findByUserId(req.user.userId);
@@ -76,7 +80,7 @@ export const updateCartItem = asyncHandler(async (req: AuthRequest, res: Respons
 });
 
 // Remove from cart
-export const removeFromCart = asyncHandler(async (req: AuthRequest, res: Response) => {
+export const removeFromCart = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
   if (!req.user) {
     throw new AppError('Authentication required', 401);
   }
@@ -85,7 +89,8 @@ export const removeFromCart = asyncHandler(async (req: AuthRequest, res: Respons
 
   const removed = await CartModel.removeItem(itemId, req.user.userId);
   if (!removed) {
-    return sendNotFound(res, 'Cart item');
+    sendNotFound(res, 'Cart item');
+    return;
   }
 
   const items = await CartModel.findByUserId(req.user.userId);

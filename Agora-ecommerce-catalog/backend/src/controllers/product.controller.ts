@@ -40,12 +40,13 @@ export const getProducts = asyncHandler(async (req: Request, res: Response) => {
 });
 
 // Get product by ID
-export const getProductById = asyncHandler(async (req: Request, res: Response) => {
+export const getProductById = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const id = parseInt(req.params.id, 10);
   const product = await ProductModel.findById(id);
 
   if (!product) {
-    return sendNotFound(res, 'Product');
+    sendNotFound(res, 'Product');
+    return;
   }
 
   const images = await ProductModel.getImages(id);
@@ -63,11 +64,12 @@ export const getProductById = asyncHandler(async (req: Request, res: Response) =
 });
 
 // Get product by slug
-export const getProductBySlug = asyncHandler(async (req: Request, res: Response) => {
+export const getProductBySlug = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const product = await ProductModel.findBySlug(req.params.slug);
 
   if (!product) {
-    return sendNotFound(res, 'Product');
+    sendNotFound(res, 'Product');
+    return;
   }
 
   const images = await ProductModel.getImages(product.id);

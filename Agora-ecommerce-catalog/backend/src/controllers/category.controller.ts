@@ -12,22 +12,24 @@ export const getCategories = asyncHandler(async (_req: Request, res: Response) =
 });
 
 // Get category by slug
-export const getCategoryBySlug = asyncHandler(async (req: Request, res: Response) => {
+export const getCategoryBySlug = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const category = await CategoryModel.findBySlug(req.params.slug);
 
   if (!category) {
-    return sendNotFound(res, 'Category');
+    sendNotFound(res, 'Category');
+    return;
   }
 
   sendSuccess(res, category);
 });
 
 // Get products in category
-export const getCategoryProducts = asyncHandler(async (req: Request, res: Response) => {
+export const getCategoryProducts = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const category = await CategoryModel.findBySlug(req.params.slug);
 
   if (!category) {
-    return sendNotFound(res, 'Category');
+    sendNotFound(res, 'Category');
+    return;
   }
 
   const { page, limit } = parsePagination(req.query as { page?: string; limit?: string });

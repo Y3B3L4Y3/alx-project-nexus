@@ -3,6 +3,21 @@ import { v4 as uuidv4 } from 'uuid';
 import { env } from '../config/env';
 import { JwtAccessPayload, JwtRefreshPayload, UserRole } from '../types';
 
+// Helper to convert expiry string to seconds
+const parseExpiry = (expiry: string): number => {
+  const match = expiry.match(/^(\d+)([smhd])$/);
+  if (!match) return 900; // Default 15 minutes
+  const value = parseInt(match[1], 10);
+  const unit = match[2];
+  switch (unit) {
+    case 's': return value;
+    case 'm': return value * 60;
+    case 'h': return value * 60 * 60;
+    case 'd': return value * 24 * 60 * 60;
+    default: return 900;
+  }
+};
+
 // Generate access token (short-lived)
 export const generateAccessToken = (
   userId: number,
@@ -16,7 +31,7 @@ export const generateAccessToken = (
   };
 
   return jwt.sign(payload, env.jwt.accessSecret, {
-    expiresIn: env.jwt.accessExpiry,
+    expiresIn: parseExpiry(env.jwt.accessExpiry),
   });
 };
 
@@ -33,7 +48,7 @@ export const generateRefreshToken = (userId: number): {
   };
 
   const token = jwt.sign(payload, env.jwt.refreshSecret, {
-    expiresIn: env.jwt.refreshExpiry,
+    expiresIn: parseExpiry(env.jwt.refreshExpiry),
   });
 
   return { token, tokenId };

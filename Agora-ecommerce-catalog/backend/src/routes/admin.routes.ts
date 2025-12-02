@@ -56,7 +56,7 @@ router.post('/products', validate(createProductValidator), asyncHandler(async (r
   sendCreated(res, product, 'Product created successfully');
 }));
 
-router.put('/products/:id', validate(updateProductValidator), asyncHandler(async (req, res) => {
+router.put('/products/:id', validate(updateProductValidator), asyncHandler(async (req, res): Promise<void> => {
   const productId = parseInt(req.params.id, 10);
   const productData = req.body;
   
@@ -82,47 +82,52 @@ router.put('/products/:id', validate(updateProductValidator), asyncHandler(async
   const updated = await ProductModel.update(productId, mappedData);
   
   if (!updated) {
-    return sendNotFound(res, 'Product');
+    sendNotFound(res, 'Product');
+    return;
   }
   
   const product = await ProductModel.findById(productId);
   sendSuccess(res, product, 'Product updated successfully');
 }));
 
-router.delete('/products/:id', asyncHandler(async (req, res) => {
+router.delete('/products/:id', asyncHandler(async (req, res): Promise<void> => {
   const productId = parseInt(req.params.id, 10);
   const deleted = await ProductModel.softDelete(productId);
   
   if (!deleted) {
-    return sendNotFound(res, 'Product');
+    sendNotFound(res, 'Product');
+    return;
   }
   
   sendSuccess(res, null, 'Product deleted successfully');
 }));
 
 // Product Images Management
-router.get('/products/:id/images', asyncHandler(async (req, res) => {
+router.get('/products/:id/images', asyncHandler(async (req, res): Promise<void> => {
   const productId = parseInt(req.params.id, 10);
   const product = await ProductModel.findById(productId);
   
   if (!product) {
-    return sendNotFound(res, 'Product');
+    sendNotFound(res, 'Product');
+    return;
   }
   
   const images = await ProductModel.getImages(productId);
   sendSuccess(res, images);
 }));
 
-router.post('/products/:id/images', uploadLocal.array('images', 10), asyncHandler(async (req, res) => {
+router.post('/products/:id/images', uploadLocal.array('images', 10), asyncHandler(async (req, res): Promise<void> => {
   const productId = parseInt(req.params.id, 10);
   const product = await ProductModel.findById(productId);
   
   if (!product) {
-    return sendNotFound(res, 'Product');
+    sendNotFound(res, 'Product');
+    return;
   }
   
   if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
-    return sendError(res, 'No images uploaded', 400);
+    sendError(res, 'No images uploaded', 400);
+    return;
   }
   
   // Add images to database
@@ -137,23 +142,25 @@ router.post('/products/:id/images', uploadLocal.array('images', 10), asyncHandle
   sendCreated(res, { imageUrls }, 'Images uploaded successfully');
 }));
 
-router.delete('/products/:productId/images/:imageId', asyncHandler(async (req, res) => {
+router.delete('/products/:productId/images/:imageId', asyncHandler(async (req, res): Promise<void> => {
   const imageId = parseInt(req.params.imageId, 10);
   const deleted = await ProductModel.deleteImage(imageId);
   
   if (!deleted) {
-    return sendNotFound(res, 'Image');
+    sendNotFound(res, 'Image');
+    return;
   }
   
   sendSuccess(res, null, 'Image deleted successfully');
 }));
 
 // Categories Management
-router.post('/categories', asyncHandler(async (req, res) => {
+router.post('/categories', asyncHandler(async (req, res): Promise<void> => {
   const { name, slug, icon, image, parentId } = req.body;
   
   if (await CategoryModel.slugExists(slug)) {
-    return sendError(res, 'Category slug already exists', 400);
+    sendError(res, 'Category slug already exists', 400);
+    return;
   }
   
   const categoryId = await CategoryModel.create({
@@ -168,12 +175,13 @@ router.post('/categories', asyncHandler(async (req, res) => {
   sendCreated(res, category, 'Category created successfully');
 }));
 
-router.put('/categories/:id', asyncHandler(async (req, res) => {
+router.put('/categories/:id', asyncHandler(async (req, res): Promise<void> => {
   const categoryId = parseInt(req.params.id, 10);
   const { name, slug, icon, image, parentId } = req.body;
   
   if (slug && await CategoryModel.slugExists(slug, categoryId)) {
-    return sendError(res, 'Category slug already exists', 400);
+    sendError(res, 'Category slug already exists', 400);
+    return;
   }
   
   const updated = await CategoryModel.update(categoryId, {
@@ -185,19 +193,21 @@ router.put('/categories/:id', asyncHandler(async (req, res) => {
   });
   
   if (!updated) {
-    return sendNotFound(res, 'Category');
+    sendNotFound(res, 'Category');
+    return;
   }
   
   const category = await CategoryModel.findById(categoryId);
   sendSuccess(res, category, 'Category updated successfully');
 }));
 
-router.delete('/categories/:id', asyncHandler(async (req, res) => {
+router.delete('/categories/:id', asyncHandler(async (req, res): Promise<void> => {
   const categoryId = parseInt(req.params.id, 10);
   const deleted = await CategoryModel.remove(categoryId);
   
   if (!deleted) {
-    return sendNotFound(res, 'Category');
+    sendNotFound(res, 'Category');
+    return;
   }
   
   sendSuccess(res, null, 'Category deleted successfully');
@@ -212,26 +222,28 @@ router.get('/orders', asyncHandler(async (req, res) => {
   sendPaginated(res, orders, { page, limit, total });
 }));
 
-router.put('/orders/:id/status', validate(updateOrderStatusValidator), asyncHandler(async (req, res) => {
+router.put('/orders/:id/status', validate(updateOrderStatusValidator), asyncHandler(async (req, res): Promise<void> => {
   const orderId = parseInt(req.params.id, 10);
   const { status } = req.body;
   
   const updated = await OrderModel.updateStatus(orderId, status);
   if (!updated) {
-    return sendNotFound(res, 'Order');
+    sendNotFound(res, 'Order');
+    return;
   }
   
   const order = await OrderModel.findById(orderId);
   sendSuccess(res, order, 'Order status updated');
 }));
 
-router.put('/orders/:id/tracking', validate(updateTrackingValidator), asyncHandler(async (req, res) => {
+router.put('/orders/:id/tracking', validate(updateTrackingValidator), asyncHandler(async (req, res): Promise<void> => {
   const orderId = parseInt(req.params.id, 10);
   const { trackingNumber, estimatedDelivery } = req.body;
   
   const updated = await OrderModel.updateTracking(orderId, trackingNumber, estimatedDelivery ? new Date(estimatedDelivery) : undefined);
   if (!updated) {
-    return sendNotFound(res, 'Order');
+    sendNotFound(res, 'Order');
+    return;
   }
   
   const order = await OrderModel.findById(orderId);
@@ -253,12 +265,13 @@ const createUserValidator = [
   body('role').optional().isIn(['customer', 'admin', 'moderator', 'editor', 'viewer', 'super_admin']).withMessage('Invalid role'),
 ];
 
-router.post('/users', validate(createUserValidator), asyncHandler(async (req, res) => {
+router.post('/users', validate(createUserValidator), asyncHandler(async (req, res): Promise<void> => {
   const { email, password, firstName, lastName, phone, role } = req.body;
   
   // Check if email already exists
   if (await UserModel.emailExists(email)) {
-    return sendError(res, 'Email already registered', 409);
+    sendError(res, 'Email already registered', 409);
+    return;
   }
   
   const passwordHash = await hashPassword(password);
@@ -291,19 +304,21 @@ const updateUserValidator = [
   body('lastName').optional().notEmpty().withMessage('Last name cannot be empty'),
 ];
 
-router.put('/users/:id', validate(updateUserValidator), asyncHandler(async (req, res) => {
+router.put('/users/:id', validate(updateUserValidator), asyncHandler(async (req, res): Promise<void> => {
   const userId = parseInt(req.params.id, 10);
   const { email, firstName, lastName, phone } = req.body;
   
   const user = await UserModel.findById(userId);
   if (!user) {
-    return sendNotFound(res, 'User');
+    sendNotFound(res, 'User');
+    return;
   }
   
   // If email is being changed, check it doesn't exist
   if (email && email !== user.email) {
     if (await UserModel.emailExists(email)) {
-      return sendError(res, 'Email already registered', 409);
+      sendError(res, 'Email already registered', 409);
+      return;
     }
   }
   
@@ -335,13 +350,14 @@ const updateUserPasswordValidator = [
     .withMessage('Password must be at least 8 characters'),
 ];
 
-router.put('/users/:id/password', validate(updateUserPasswordValidator), asyncHandler(async (req, res) => {
+router.put('/users/:id/password', validate(updateUserPasswordValidator), asyncHandler(async (req, res): Promise<void> => {
   const userId = parseInt(req.params.id, 10);
   const { newPassword } = req.body;
   
   const user = await UserModel.findById(userId);
   if (!user) {
-    return sendNotFound(res, 'User');
+    sendNotFound(res, 'User');
+    return;
   }
   
   const passwordHash = await hashPassword(newPassword);
@@ -369,20 +385,21 @@ router.get('/messages', asyncHandler(async (req, res) => {
   sendPaginated(res, messages, { page, limit, total });
 }));
 
-router.get('/messages/:id', asyncHandler(async (req, res) => {
+router.get('/messages/:id', asyncHandler(async (req, res): Promise<void> => {
   const [message] = await query<RowDataPacket[]>(
     'SELECT * FROM contact_messages WHERE id = ?',
     [req.params.id]
   );
   
   if (!message) {
-    return sendNotFound(res, 'Message');
+    sendNotFound(res, 'Message');
+    return;
   }
   
   sendSuccess(res, message);
 }));
 
-router.put('/messages/:id/status', asyncHandler(async (req, res) => {
+router.put('/messages/:id/status', asyncHandler(async (req, res): Promise<void> => {
   const { status } = req.body;
   
   const result = await query<ResultSetHeader>(
@@ -391,7 +408,8 @@ router.put('/messages/:id/status', asyncHandler(async (req, res) => {
   );
   
   if (result.affectedRows === 0) {
-    return sendNotFound(res, 'Message');
+    sendNotFound(res, 'Message');
+    return;
   }
   
   sendSuccess(res, null, 'Message status updated');

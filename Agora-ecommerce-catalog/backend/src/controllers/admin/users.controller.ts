@@ -19,25 +19,27 @@ export const getUsers = asyncHandler(async (req: Request, res: Response) => {
 });
 
 // Get user by ID
-export const getUserById = asyncHandler(async (req: Request, res: Response) => {
+export const getUserById = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const userId = parseInt(req.params.id, 10);
   const user = await UserModel.findById(userId);
 
   if (!user) {
-    return sendNotFound(res, 'User');
+    sendNotFound(res, 'User');
+    return;
   }
 
   sendSuccess(res, toPublicUser(user));
 });
 
 // Update user status
-export const updateUserStatus = asyncHandler(async (req: Request, res: Response) => {
+export const updateUserStatus = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const userId = parseInt(req.params.id, 10);
   const { status } = req.body;
 
   const updated = await UserModel.updateStatus(userId, status);
   if (!updated) {
-    return sendNotFound(res, 'User');
+    sendNotFound(res, 'User');
+    return;
   }
 
   const user = await UserModel.findById(userId);
@@ -45,13 +47,14 @@ export const updateUserStatus = asyncHandler(async (req: Request, res: Response)
 });
 
 // Update user role
-export const updateUserRole = asyncHandler(async (req: Request, res: Response) => {
+export const updateUserRole = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const userId = parseInt(req.params.id, 10);
   const { role } = req.body;
 
   const updated = await UserModel.updateRole(userId, role);
   if (!updated) {
-    return sendNotFound(res, 'User');
+    sendNotFound(res, 'User');
+    return;
   }
 
   const user = await UserModel.findById(userId);

@@ -1,4 +1,4 @@
-import { query, pool } from '../config/database';
+import { query } from '../config/database';
 import { User, UserRole, UserStatus, UserPublic } from '../types';
 import { RowDataPacket, ResultSetHeader } from 'mysql2';
 

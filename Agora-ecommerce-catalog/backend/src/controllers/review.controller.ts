@@ -13,7 +13,7 @@ export const getProductReviews = asyncHandler(async (req: Request, res: Response
 });
 
 // Add review
-export const addReview = asyncHandler(async (req: AuthRequest, res: Response) => {
+export const addReview = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
   if (!req.user) {
     throw new AppError('Authentication required', 401);
   }
@@ -24,13 +24,15 @@ export const addReview = asyncHandler(async (req: AuthRequest, res: Response) =>
   // Check if product exists
   const product = await ProductModel.findById(productId);
   if (!product) {
-    return sendNotFound(res, 'Product');
+    sendNotFound(res, 'Product');
+    return;
   }
 
   // Check if user already reviewed
   const existingReview = await ReviewModel.userReviewExists(req.user.userId, productId);
   if (existingReview) {
-    return sendError(res, 'You have already reviewed this product', 400);
+    sendError(res, 'You have already reviewed this product', 400);
+    return;
   }
 
   // Create review
@@ -50,7 +52,7 @@ export const addReview = asyncHandler(async (req: AuthRequest, res: Response) =>
 });
 
 // Update review
-export const updateReview = asyncHandler(async (req: AuthRequest, res: Response) => {
+export const updateReview = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
   if (!req.user) {
     throw new AppError('Authentication required', 401);
   }
@@ -60,7 +62,8 @@ export const updateReview = asyncHandler(async (req: AuthRequest, res: Response)
 
   const review = await ReviewModel.findById(reviewId);
   if (!review) {
-    return sendNotFound(res, 'Review');
+    sendNotFound(res, 'Review');
+    return;
   }
 
   const updated = await ReviewModel.update(reviewId, req.user.userId, {
@@ -70,7 +73,8 @@ export const updateReview = asyncHandler(async (req: AuthRequest, res: Response)
   });
 
   if (!updated) {
-    return sendError(res, 'Failed to update review', 400);
+    sendError(res, 'Failed to update review', 400);
+    return;
   }
 
   // Update product rating
@@ -81,7 +85,7 @@ export const updateReview = asyncHandler(async (req: AuthRequest, res: Response)
 });
 
 // Delete review
-export const deleteReview = asyncHandler(async (req: AuthRequest, res: Response) => {
+export const deleteReview = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
   if (!req.user) {
     throw new AppError('Authentication required', 401);
   }
@@ -90,12 +94,14 @@ export const deleteReview = asyncHandler(async (req: AuthRequest, res: Response)
   
   const review = await ReviewModel.findById(reviewId);
   if (!review) {
-    return sendNotFound(res, 'Review');
+    sendNotFound(res, 'Review');
+    return;
   }
 
   const deleted = await ReviewModel.remove(reviewId, req.user.userId);
   if (!deleted) {
-    return sendError(res, 'Failed to delete review', 400);
+    sendError(res, 'Failed to delete review', 400);
+    return;
   }
 
   // Update product rating
@@ -105,7 +111,7 @@ export const deleteReview = asyncHandler(async (req: AuthRequest, res: Response)
 });
 
 // Mark review as helpful
-export const markHelpful = asyncHandler(async (req: AuthRequest, res: Response) => {
+export const markHelpful = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
   if (!req.user) {
     throw new AppError('Authentication required', 401);
   }
@@ -114,7 +120,8 @@ export const markHelpful = asyncHandler(async (req: AuthRequest, res: Response) 
   
   const updated = await ReviewModel.incrementHelpful(reviewId);
   if (!updated) {
-    return sendNotFound(res, 'Review');
+    sendNotFound(res, 'Review');
+    return;
   }
 
   sendSuccess(res, null, 'Marked as helpful');

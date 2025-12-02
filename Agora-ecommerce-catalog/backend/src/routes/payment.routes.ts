@@ -44,7 +44,7 @@ router.post('/', asyncHandler(async (req: AuthRequest, res) => {
 }));
 
 // Delete payment method
-router.delete('/:id', asyncHandler(async (req: AuthRequest, res) => {
+router.delete('/:id', asyncHandler(async (req: AuthRequest, res): Promise<void> => {
   if (!req.user) throw new AppError('Authentication required', 401);
   
   const result = await query<ResultSetHeader>(
@@ -53,14 +53,15 @@ router.delete('/:id', asyncHandler(async (req: AuthRequest, res) => {
   );
   
   if (result.affectedRows === 0) {
-    return sendNotFound(res, 'Payment method');
+    sendNotFound(res, 'Payment method');
+    return;
   }
   
   sendSuccess(res, null, 'Payment method deleted');
 }));
 
 // Set default
-router.put('/:id/default', asyncHandler(async (req: AuthRequest, res) => {
+router.put('/:id/default', asyncHandler(async (req: AuthRequest, res): Promise<void> => {
   if (!req.user) throw new AppError('Authentication required', 401);
   
   await query(
@@ -74,7 +75,8 @@ router.put('/:id/default', asyncHandler(async (req: AuthRequest, res) => {
   );
   
   if (result.affectedRows === 0) {
-    return sendNotFound(res, 'Payment method');
+    sendNotFound(res, 'Payment method');
+    return;
   }
   
   sendSuccess(res, null, 'Default payment method updated');

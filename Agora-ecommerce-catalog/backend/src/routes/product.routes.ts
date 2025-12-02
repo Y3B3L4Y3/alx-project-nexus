@@ -2,7 +2,7 @@ import { Router } from 'express';
 import ProductController from '../controllers/product.controller';
 import ReviewController from '../controllers/review.controller';
 import { validate } from '../middleware/validate.middleware';
-import { authenticate, optionalAuth } from '../middleware/auth.middleware';
+import { authenticate } from '../middleware/auth.middleware';
 import { productQueryValidator } from '../validators/product.validator';
 import { reviewValidator } from '../validators/order.validator';
 

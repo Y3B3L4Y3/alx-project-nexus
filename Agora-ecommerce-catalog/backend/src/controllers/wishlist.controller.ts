@@ -16,7 +16,7 @@ export const getWishlist = asyncHandler(async (req: AuthRequest, res: Response) 
 });
 
 // Add to wishlist
-export const addToWishlist = asyncHandler(async (req: AuthRequest, res: Response) => {
+export const addToWishlist = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
   if (!req.user) {
     throw new AppError('Authentication required', 401);
   }
@@ -26,14 +26,16 @@ export const addToWishlist = asyncHandler(async (req: AuthRequest, res: Response
   // Check if product exists
   const product = await ProductModel.findById(productId);
   if (!product) {
-    return sendNotFound(res, 'Product');
+    sendNotFound(res, 'Product');
+    return;
   }
 
   // Check if already in wishlist
   const exists = await WishlistModel.exists(req.user.userId, productId);
   if (exists) {
     const items = await WishlistModel.findByUserId(req.user.userId);
-    return sendSuccess(res, items, 'Product already in wishlist');
+    sendSuccess(res, items, 'Product already in wishlist');
+    return;
   }
 
   await WishlistModel.add(req.user.userId, productId);
@@ -42,7 +44,7 @@ export const addToWishlist = asyncHandler(async (req: AuthRequest, res: Response
 });
 
 // Remove from wishlist
-export const removeFromWishlist = asyncHandler(async (req: AuthRequest, res: Response) => {
+export const removeFromWishlist = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
   if (!req.user) {
     throw new AppError('Authentication required', 401);
   }
@@ -51,7 +53,8 @@ export const removeFromWishlist = asyncHandler(async (req: AuthRequest, res: Res
 
   const removed = await WishlistModel.remove(req.user.userId, productId);
   if (!removed) {
-    return sendNotFound(res, 'Wishlist item');
+    sendNotFound(res, 'Wishlist item');
+    return;
   }
 
   const items = await WishlistModel.findByUserId(req.user.userId);
@@ -59,7 +62,7 @@ export const removeFromWishlist = asyncHandler(async (req: AuthRequest, res: Res
 });
 
 // Toggle wishlist
-export const toggleWishlist = asyncHandler(async (req: AuthRequest, res: Response) => {
+export const toggleWishlist = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
   if (!req.user) {
     throw new AppError('Authentication required', 401);
   }
@@ -69,7 +72,8 @@ export const toggleWishlist = asyncHandler(async (req: AuthRequest, res: Respons
   // Check if product exists
   const product = await ProductModel.findById(productId);
   if (!product) {
-    return sendNotFound(res, 'Product');
+    sendNotFound(res, 'Product');
+    return;
   }
 
   const result = await WishlistModel.toggle(req.user.userId, productId);

@@ -29,7 +29,7 @@ export const getOrders = asyncHandler(async (req: AuthRequest, res: Response) =>
 });
 
 // Get order by ID
-export const getOrderById = asyncHandler(async (req: AuthRequest, res: Response) => {
+export const getOrderById = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
   if (!req.user) {
     throw new AppError('Authentication required', 401);
   }
@@ -37,7 +37,8 @@ export const getOrderById = asyncHandler(async (req: AuthRequest, res: Response)
   const order = await OrderModel.findByOrderId(req.params.orderId);
 
   if (!order || order.user_id !== req.user.userId) {
-    return sendNotFound(res, 'Order');
+    sendNotFound(res, 'Order');
+    return;
   }
 
   const items = await OrderModel.getOrderItems(order.id);
@@ -53,7 +54,7 @@ export const getOrderById = asyncHandler(async (req: AuthRequest, res: Response)
 });
 
 // Create order
-export const createOrder = asyncHandler(async (req: AuthRequest, res: Response) => {
+export const createOrder = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
   if (!req.user) {
     throw new AppError('Authentication required', 401);
   }
@@ -63,12 +64,14 @@ export const createOrder = asyncHandler(async (req: AuthRequest, res: Response) 
   // Validate addresses
   const shippingAddress = await AddressModel.findById(shippingAddressId);
   if (!shippingAddress || shippingAddress.user_id !== req.user.userId) {
-    return sendError(res, 'Invalid shipping address', 400);
+    sendError(res, 'Invalid shipping address', 400);
+    return;
   }
 
   const billingAddress = await AddressModel.findById(billingAddressId);
   if (!billingAddress || billingAddress.user_id !== req.user.userId) {
-    return sendError(res, 'Invalid billing address', 400);
+    sendError(res, 'Invalid billing address', 400);
+    return;
   }
 
   // Validate and get product details
@@ -78,10 +81,12 @@ export const createOrder = asyncHandler(async (req: AuthRequest, res: Response) 
   for (const item of items) {
     const product = await ProductModel.findById(item.productId);
     if (!product) {
-      return sendError(res, `Product ${item.productId} not found`, 400);
+      sendError(res, `Product ${item.productId} not found`, 400);
+      return;
     }
     if (product.stock < item.quantity) {
-      return sendError(res, `Insufficient stock for ${product.name}`, 400);
+      sendError(res, `Insufficient stock for ${product.name}`, 400);
+      return;
     }
 
     orderItems.push({
@@ -130,7 +135,7 @@ export const createOrder = asyncHandler(async (req: AuthRequest, res: Response) 
 });
 
 // Cancel order
-export const cancelOrder = asyncHandler(async (req: AuthRequest, res: Response) => {
+export const cancelOrder = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
   if (!req.user) {
     throw new AppError('Authentication required', 401);
   }
@@ -138,20 +143,24 @@ export const cancelOrder = asyncHandler(async (req: AuthRequest, res: Response) 
   const order = await OrderModel.findByOrderId(req.params.orderId);
 
   if (!order) {
-    return sendNotFound(res, 'Order');
+    sendNotFound(res, 'Order');
+    return;
   }
 
   if (order.user_id !== req.user.userId) {
-    return sendError(res, 'Unauthorized', 403);
+    sendError(res, 'Unauthorized', 403);
+    return;
   }
 
   if (order.status === 'delivered' || order.status === 'cancelled') {
-    return sendError(res, 'Cannot cancel this order', 400);
+    sendError(res, 'Cannot cancel this order', 400);
+    return;
   }
 
   const cancelled = await OrderModel.cancel(order.id, req.user.userId);
   if (!cancelled) {
-    return sendError(res, 'Failed to cancel order', 400);
+    sendError(res, 'Failed to cancel order', 400);
+    return;
   }
 
   const updatedOrder = await OrderModel.findById(order.id);

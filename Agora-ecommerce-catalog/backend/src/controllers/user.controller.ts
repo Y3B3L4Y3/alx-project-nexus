@@ -5,21 +5,22 @@ import { asyncHandler, AppError } from '../middleware/error.middleware';
 import { AuthRequest } from '../types';
 
 // Get current user profile
-export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
+export const getProfile = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
   if (!req.user) {
     throw new AppError('Authentication required', 401);
   }
 
   const user = await UserModel.findById(req.user.userId);
   if (!user) {
-    return sendNotFound(res, 'User');
+    sendNotFound(res, 'User');
+    return;
   }
 
   sendSuccess(res, toPublicUser(user));
 });
 
 // Update current user profile
-export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
+export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
   if (!req.user) {
     throw new AppError('Authentication required', 401);
   }
@@ -36,7 +37,8 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
 
   const user = await UserModel.findById(req.user.userId);
   if (!user) {
-    return sendNotFound(res, 'User');
+    sendNotFound(res, 'User');
+    return;
   }
 
   sendSuccess(res, toPublicUser(user), 'Profile updated successfully');

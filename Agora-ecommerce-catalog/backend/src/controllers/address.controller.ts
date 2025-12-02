@@ -40,7 +40,7 @@ export const addAddress = asyncHandler(async (req: AuthRequest, res: Response) =
 });
 
 // Update address
-export const updateAddress = asyncHandler(async (req: AuthRequest, res: Response) => {
+export const updateAddress = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
   if (!req.user) {
     throw new AppError('Authentication required', 401);
   }
@@ -61,7 +61,8 @@ export const updateAddress = asyncHandler(async (req: AuthRequest, res: Response
   });
 
   if (!updated) {
-    return sendNotFound(res, 'Address');
+    sendNotFound(res, 'Address');
+    return;
   }
 
   const address = await AddressModel.findById(addressId);
@@ -69,7 +70,7 @@ export const updateAddress = asyncHandler(async (req: AuthRequest, res: Response
 });
 
 // Delete address
-export const deleteAddress = asyncHandler(async (req: AuthRequest, res: Response) => {
+export const deleteAddress = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
   if (!req.user) {
     throw new AppError('Authentication required', 401);
   }
@@ -78,14 +79,15 @@ export const deleteAddress = asyncHandler(async (req: AuthRequest, res: Response
 
   const deleted = await AddressModel.remove(addressId, req.user.userId);
   if (!deleted) {
-    return sendNotFound(res, 'Address');
+    sendNotFound(res, 'Address');
+    return;
   }
 
   sendSuccess(res, null, 'Address deleted successfully');
 });
 
 // Set default address
-export const setDefaultAddress = asyncHandler(async (req: AuthRequest, res: Response) => {
+export const setDefaultAddress = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
   if (!req.user) {
     throw new AppError('Authentication required', 401);
   }
@@ -94,7 +96,8 @@ export const setDefaultAddress = asyncHandler(async (req: AuthRequest, res: Resp
 
   const updated = await AddressModel.setDefault(addressId, req.user.userId);
   if (!updated) {
-    return sendNotFound(res, 'Address');
+    sendNotFound(res, 'Address');
+    return;
   }
 
   const addresses = await AddressModel.findByUserId(req.user.userId);
