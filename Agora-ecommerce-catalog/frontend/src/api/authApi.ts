@@ -2,6 +2,9 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { ApiResponse } from './types';
 import type { UserRole } from '../redux/slices/authSlice';
 
+// API base URL: uses environment variable, falls back to localhost for development
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 interface LoginRequest {
   email: string;
   password: string;
@@ -36,7 +39,7 @@ interface AuthResponse {
 export const authApi = createApi({
   reducerPath: 'authApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: 'http://localhost:5000/api',
+    baseUrl: API_BASE_URL,
     credentials: 'include',
   }),
   endpoints: (builder) => ({
