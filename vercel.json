@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "buildCommand": "cd Agora-ecommerce-catalog && npm run build",
-  "outputDirectory": "Agora-ecommerce-catalog/dist",
-  "installCommand": "cd Agora-ecommerce-catalog && npm install",
+  "buildCommand": "cd Agora-ecommerce-catalog/frontend && npm run build",
+  "outputDirectory": "Agora-ecommerce-catalog/frontend/dist",
+  "installCommand": "cd Agora-ecommerce-catalog/frontend && npm install",
   "framework": "vite",
   "rewrites": [
     {

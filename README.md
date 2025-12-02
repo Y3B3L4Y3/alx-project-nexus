@@ -2,9 +2,15 @@
 
 A modern, full-featured e-commerce platform built with React, TypeScript, and Node.js.
 
+![AGORA](https://img.shields.io/badge/AGORA-E--Commerce-blue)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript)
+![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=node.js)
+![MySQL](https://img.shields.io/badge/MySQL-8-4479A1?logo=mysql)
+
 ---
 
-## Table of Contents
+## 📋 Table of Contents
 
 - [Overview](#overview)
 - [Features](#features)
@@ -14,13 +20,13 @@ A modern, full-featured e-commerce platform built with React, TypeScript, and No
 - [Environment Variables](#environment-variables)
 - [API Documentation](#api-documentation)
 - [Admin Panel](#admin-panel)
-- [User Guide](#user-guide)
+- [Deployment](#deployment)
 - [Development](#development)
 - [Troubleshooting](#troubleshooting)
 
 ---
 
-## Overview
+## 🌟 Overview
 
 AGORA is a complete e-commerce solution that includes:
 
@@ -31,33 +37,36 @@ AGORA is a complete e-commerce solution that includes:
 
 ---
 
-## Features
+## ✨ Features
 
 ### For Customers
 
 | Feature | Description |
 |---------|-------------|
-| Product Browsing | View products by category, search, filter by price/rating |
-| Shopping Cart | Add/remove items, update quantities |
-| Wishlist | Save favorite products for later |
-| User Account | Register, login, manage profile |
-| Order History | View past orders and track status |
-| Reviews | Read and write product reviews |
+| 🛍️ Product Browsing | View products by category, search, filter by price/rating |
+| 🛒 Shopping Cart | Add/remove items, update quantities |
+| ❤️ Wishlist | Save favorite products for later |
+| 👤 User Account | Register, login, manage profile |
+| 📦 Order History | View past orders and track status |
+| ⭐ Reviews | Read and write product reviews |
+| 📱 Responsive Design | Works on desktop, tablet, and mobile |
+| 🔄 Infinite Scroll | Load products dynamically as you scroll |
 
 ### For Administrators
 
 | Feature | Description |
 |---------|-------------|
-| Dashboard | View sales stats, orders, and analytics |
-| Product Management | Create, edit, delete products with multiple images |
-| Order Management | View orders, update status, add tracking |
-| User Management | View users, change roles, reset passwords |
-| Category Management | Organize products into categories |
-| Messages | View and respond to customer inquiries |
+| 📊 Dashboard | View sales stats, orders, and analytics |
+| 📦 Product Management | Create, edit, delete products with multiple images |
+| 📋 Order Management | View orders, update status, add tracking |
+| 👥 User Management | View users, change roles, reset passwords |
+| 🏷️ Category Management | Organize products into categories |
+| 💬 Messages | View and respond to customer inquiries |
+| 🔐 Role-Based Access | Different permission levels for staff |
 
 ---
 
-## Tech Stack
+## 🛠️ Tech Stack
 
 ### Frontend
 
@@ -85,55 +94,64 @@ AGORA is a complete e-commerce solution that includes:
 
 ---
 
-## Project Structure
+## 📁 Project Structure
 
 ```
-Agora-ecommerce-catalog/
-├── src/                      # Frontend source code
-│   ├── api/                  # API integration (RTK Query)
-│   │   ├── adminApi.ts       # Admin endpoints
-│   │   ├── authApi.ts        # Authentication endpoints
-│   │   ├── productApi.ts     # Product endpoints
-│   │   └── userApi.ts        # User endpoints
-│   ├── components/           # Reusable UI components
-│   │   ├── admin/            # Admin-specific components
-│   │   ├── common/           # Shared components (Button, Modal, etc.)
-│   │   ├── layout/           # Header, Footer, Sidebar
-│   │   └── product/          # Product cards, lists
-│   ├── pages/                # Page components
-│   │   ├── admin/            # Admin panel pages
-│   │   ├── home_page.tsx     # Homepage
-│   │   ├── Products.tsx      # Product listing
-│   │   ├── ProductDetail.tsx # Single product view
-│   │   ├── Cart.tsx          # Shopping cart
-│   │   ├── Checkout.tsx      # Checkout process
-│   │   └── Account.tsx       # User account
-│   ├── redux/                # Redux store configuration
-│   │   ├── slices/           # Redux slices (cart, auth, wishlist)
-│   │   └── store.ts          # Store setup
-│   ├── hooks/                # Custom React hooks
-│   ├── utils/                # Helper functions
-│   └── types/                # TypeScript type definitions
+alx-project-nexus/
+├── Agora-ecommerce-catalog/
+│   ├── frontend/                 # Frontend React application
+│   │   ├── src/
+│   │   │   ├── api/              # API integration (RTK Query)
+│   │   │   │   ├── adminApi.ts   # Admin endpoints
+│   │   │   │   ├── authApi.ts    # Authentication endpoints
+│   │   │   │   ├── productApi.ts # Product endpoints
+│   │   │   │   └── userApi.ts    # User endpoints
+│   │   │   ├── components/       # Reusable UI components
+│   │   │   │   ├── admin/        # Admin-specific components
+│   │   │   │   ├── common/       # Shared components (Button, Modal)
+│   │   │   │   ├── layout/       # Header, Footer, Sidebar
+│   │   │   │   └── product/      # Product cards, lists
+│   │   │   ├── pages/            # Page components
+│   │   │   │   ├── admin/        # Admin panel pages
+│   │   │   │   ├── home_page.tsx # Homepage
+│   │   │   │   ├── Products.tsx  # Product listing
+│   │   │   │   ├── Cart.tsx      # Shopping cart
+│   │   │   │   └── Checkout.tsx  # Checkout process
+│   │   │   ├── redux/            # Redux store configuration
+│   │   │   │   ├── slices/       # Redux slices (cart, auth, wishlist)
+│   │   │   │   └── store.ts      # Store setup
+│   │   │   ├── hooks/            # Custom React hooks
+│   │   │   ├── utils/            # Helper functions
+│   │   │   └── types/            # TypeScript type definitions
+│   │   ├── public/               # Static assets
+│   │   ├── dist/                 # Production build output
+│   │   ├── package.json          # Frontend dependencies
+│   │   ├── vite.config.ts        # Vite configuration
+│   │   ├── tailwind.config.js    # Tailwind CSS configuration
+│   │   └── tsconfig.json         # TypeScript configuration
+│   │
+│   ├── backend/                  # Backend Node.js application
+│   │   └── src/
+│   │       ├── config/           # Database, environment config
+│   │       ├── controllers/      # Request handlers
+│   │       │   └── admin/        # Admin-specific controllers
+│   │       ├── middleware/       # Auth, validation, error handling
+│   │       ├── models/           # Database models
+│   │       ├── routes/           # API route definitions
+│   │       ├── services/         # Business logic
+│   │       ├── validators/       # Input validation rules
+│   │       └── utils/            # Helper utilities
+│   │
+│   ├── docs/                     # Documentation files
+│   └── vercel.json               # Vercel deployment config
 │
-├── backend/                  # Backend source code
-│   └── src/
-│       ├── config/           # Database, environment config
-│       ├── controllers/      # Request handlers
-│       │   └── admin/        # Admin-specific controllers
-│       ├── middleware/       # Auth, validation, error handling
-│       ├── models/           # Database models
-│       ├── routes/           # API route definitions
-│       ├── services/         # Business logic
-│       ├── validators/       # Input validation rules
-│       └── utils/            # Helper utilities
-│
-├── public/                   # Static assets
-└── dist/                     # Production build output
+├── README.md                     # This file
+└── vercel.json                   # Root Vercel config
 ```
 
 ---
 
-## Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
 
@@ -146,14 +164,16 @@ Agora-ecommerce-catalog/
 #### 1. Clone the repository
 
 ```bash
-git clone <repository-url>
-cd Agora-ecommerce-catalog
+git clone https://github.com/Y3B3L4Y3/alx-project-nexus.git
+cd alx-project-nexus/Agora-ecommerce-catalog
 ```
 
 #### 2. Install frontend dependencies
 
 ```bash
+cd frontend
 npm install
+cd ..
 ```
 
 #### 3. Install backend dependencies
@@ -193,6 +213,7 @@ npm run dev
 
 **Terminal 2 - Frontend:**
 ```bash
+cd frontend
 npm run dev
 ```
 
@@ -203,9 +224,9 @@ npm run dev
 
 ---
 
-## Environment Variables
+## 🔐 Environment Variables
 
-### Frontend (.env)
+### Frontend (frontend/.env)
 
 ```env
 VITE_API_URL=http://localhost:5000/api
@@ -226,21 +247,18 @@ DB_PASSWORD=your_password
 DB_NAME=agora_ecommerce
 
 # JWT
-JWT_SECRET=your_super_secret_key_here
-JWT_EXPIRES_IN=15m
-JWT_REFRESH_SECRET=your_refresh_secret_key
-JWT_REFRESH_EXPIRES_IN=7d
+JWT_ACCESS_SECRET=your_access_secret_key_here
+JWT_REFRESH_SECRET=your_refresh_secret_key_here
+JWT_ACCESS_EXPIRY=15m
+JWT_REFRESH_EXPIRY=7d
 
-# Optional: AWS S3 for image uploads
-AWS_ACCESS_KEY_ID=
-AWS_SECRET_ACCESS_KEY=
-AWS_BUCKET_NAME=
-AWS_REGION=
+# Frontend URL (for CORS)
+FRONTEND_URL=http://localhost:5173
 ```
 
 ---
 
-## API Documentation
+## 📚 API Documentation
 
 ### Authentication
 
@@ -251,6 +269,7 @@ AWS_REGION=
 | `/api/auth/admin/login` | POST | Login admin |
 | `/api/auth/refresh` | POST | Refresh access token |
 | `/api/auth/logout` | POST | Logout user |
+| `/api/auth/change-password` | POST | Change password |
 
 ### Products
 
@@ -261,6 +280,7 @@ AWS_REGION=
 | `/api/products/featured` | GET | Get featured products |
 | `/api/products/new-arrivals` | GET | Get new products |
 | `/api/products/best-selling` | GET | Get best sellers |
+| `/api/products/search` | GET | Search products |
 
 ### Categories
 
@@ -268,34 +288,36 @@ AWS_REGION=
 |----------|--------|-------------|
 | `/api/categories` | GET | Get all categories |
 | `/api/categories/:slug` | GET | Get category by slug |
+| `/api/categories/:slug/products` | GET | Get products in category |
 
-### User
+### User (Authenticated)
 
-| Endpoint | Method | Auth | Description |
-|----------|--------|------|-------------|
-| `/api/user/me` | GET | Yes | Get current user profile |
-| `/api/user/me` | PUT | Yes | Update user profile |
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/user/me` | GET | Get current user profile |
+| `/api/user/me` | PUT | Update user profile |
+| `/api/user/addresses` | GET | Get user addresses |
+| `/api/user/addresses` | POST | Add new address |
 
-### Cart
+### Cart (Authenticated)
 
-| Endpoint | Method | Auth | Description |
-|----------|--------|------|-------------|
-| `/api/cart` | GET | Yes | Get user's cart |
-| `/api/cart` | POST | Yes | Add item to cart |
-| `/api/cart/:itemId` | PUT | Yes | Update cart item |
-| `/api/cart/:itemId` | DELETE | Yes | Remove from cart |
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/cart` | GET | Get user's cart |
+| `/api/cart` | POST | Add item to cart |
+| `/api/cart/:itemId` | PUT | Update cart item |
+| `/api/cart/:itemId` | DELETE | Remove from cart |
 
-### Orders
+### Orders (Authenticated)
 
-| Endpoint | Method | Auth | Description |
-|----------|--------|------|-------------|
-| `/api/orders` | GET | Yes | Get user's orders |
-| `/api/orders/:id` | GET | Yes | Get order details |
-| `/api/orders` | POST | Yes | Create new order |
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/orders` | GET | Get user's orders |
+| `/api/orders/:id` | GET | Get order details |
+| `/api/orders` | POST | Create new order |
+| `/api/orders/:id/cancel` | POST | Cancel order |
 
-### Admin Endpoints
-
-All admin endpoints require authentication and admin role.
+### Admin Endpoints (Admin Role Required)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -303,17 +325,15 @@ All admin endpoints require authentication and admin role.
 | `/api/admin/products` | POST | Create product |
 | `/api/admin/products/:id` | PUT | Update product |
 | `/api/admin/products/:id` | DELETE | Delete product |
-| `/api/admin/products/:id/images` | POST | Upload product images |
 | `/api/admin/users` | GET | Get all users |
 | `/api/admin/users/:id/role` | PUT | Update user role |
-| `/api/admin/users/:id/status` | PUT | Update user status |
 | `/api/admin/users/:id/password` | PUT | Reset user password |
 | `/api/admin/orders` | GET | Get all orders |
 | `/api/admin/orders/:id/status` | PUT | Update order status |
 
 ---
 
-## Admin Panel
+## 👨‍💼 Admin Panel
 
 ### Accessing the Admin Panel
 
@@ -334,7 +354,7 @@ After running `npm run seed`, you can use these accounts:
 | Viewer | viewer@agora.com | Viewer@123 |
 | Customer | customer@example.com | Customer@123 |
 
-### User Roles
+### User Roles & Permissions
 
 | Role | Permissions |
 |------|-------------|
@@ -345,71 +365,37 @@ After running `npm run seed`, you can use these accounts:
 | viewer | Read-only access |
 | customer | No admin access |
 
-### Admin Features
+---
 
-#### Dashboard
-- View total sales, orders, users
-- See pending orders count
-- Monitor new registrations
+## 🚀 Deployment
 
-#### Products Management
-- Add new products with multiple images
-- Edit product details, price, stock
-- Set featured/new badges
-- Delete products (soft delete)
+### Frontend (Vercel)
 
-#### Orders Management
-- View all orders with status
-- Update order status (pending → processing → shipped → delivered)
-- Add tracking numbers
+The frontend is configured for Vercel deployment:
 
-#### Users Management
-- View all registered users
-- Change user roles
-- Activate/suspend accounts
-- Reset user passwords
+1. Connect your GitHub repository to Vercel
+2. Set the root directory to `Agora-ecommerce-catalog/frontend`
+3. Add environment variable: `VITE_API_URL=https://your-backend-url.com/api`
+4. Deploy
+
+### Backend (Render)
+
+The backend can be deployed to Render:
+
+1. Create a new Web Service on Render
+2. Connect your GitHub repository
+3. Set root directory to `Agora-ecommerce-catalog/backend`
+4. Build command: `npm install && npm run build`
+5. Start command: `npm start`
+6. Add environment variables (database, JWT secrets, etc.)
 
 ---
 
-## User Guide
-
-### Shopping Flow
-
-1. **Browse Products**
-   - Visit homepage or products page
-   - Use filters (category, price, rating)
-   - Search by product name
-
-2. **Add to Cart**
-   - Click "Add to Cart" on any product
-   - Select color/size if available
-   - Adjust quantity in cart
-
-3. **Checkout**
-   - Review cart items
-   - Enter shipping address
-   - Select payment method
-   - Place order
-
-4. **Track Order**
-   - Go to Account → Orders
-   - View order status and tracking
-
-### Account Management
-
-- **Register**: Create account with email and password
-- **Login**: Access your account
-- **Profile**: Update name, phone, avatar
-- **Addresses**: Manage shipping addresses
-- **Orders**: View order history
-
----
-
-## Development
+## 💻 Development
 
 ### Available Scripts
 
-#### Frontend
+#### Frontend (from `frontend/` directory)
 
 ```bash
 npm run dev       # Start development server
@@ -419,10 +405,9 @@ npm run lint      # Run ESLint
 npm run test      # Run tests
 ```
 
-#### Backend
+#### Backend (from `backend/` directory)
 
 ```bash
-cd backend
 npm run dev       # Start with hot reload
 npm run build     # Compile TypeScript
 npm run start     # Start production server
@@ -438,27 +423,9 @@ npm run test      # Run tests
 - Use Prettier for formatting
 - Write meaningful commit messages
 
-### Adding New Features
-
-1. **Frontend Component**
-   ```
-   src/components/feature/FeatureName.tsx
-   ```
-
-2. **API Endpoint**
-   ```
-   src/api/featureApi.ts (frontend)
-   backend/src/routes/feature.routes.ts (backend)
-   ```
-
-3. **Redux State**
-   ```
-   src/redux/slices/featureSlice.ts
-   ```
-
 ---
 
-## Troubleshooting
+## 🔧 Troubleshooting
 
 ### Common Issues
 
@@ -480,12 +447,11 @@ sudo systemctl status mysql
 #### "CORS error"
 
 - Ensure backend CORS config allows frontend URL
-- Check `backend/src/config/cors.ts`
+- Check `FRONTEND_URL` in backend `.env`
 
 #### "422 Unprocessable Entity" on product creation
 
-- Ensure all required fields are filled:
-  - name, description, price, stock, categoryId, thumbnail
+- Ensure all required fields are filled
 - Check browser console for validation errors
 
 #### Images not uploading
@@ -505,16 +471,16 @@ If you encounter issues:
 
 ---
 
-## License
+## 📄 License
 
 This project is for educational purposes as part of the ALX program.
 
 ---
 
-## Contributors
+## 👥 Contributors
 
-- Built with care for the ALX Frontend Project
+- Built with ❤️ for the ALX Frontend Project
 
 ---
 
-Made with React, Node.js, and TypeScript
+Made with React, Node.js, and TypeScript 🚀
