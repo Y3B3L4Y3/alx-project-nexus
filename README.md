@@ -369,25 +369,35 @@ After running `npm run seed`, you can use these accounts:
 
 ## 🚀 Deployment
 
+### Live Demo
+
+| Service | URL |
+|---------|-----|
+| 🔧 Backend API | https://alx-project-nexus-1-fukx.onrender.com |
+| 🌐 Frontend | *Deploy to Vercel* |
+
 ### Frontend (Vercel)
 
 The frontend is configured for Vercel deployment:
 
 1. Connect your GitHub repository to Vercel
 2. Set the root directory to `Agora-ecommerce-catalog/frontend`
-3. Add environment variable: `VITE_API_URL=https://your-backend-url.com/api`
+3. Add environment variable: `VITE_API_URL=https://alx-project-nexus-1-fukx.onrender.com/api`
 4. Deploy
 
 ### Backend (Render)
 
-The backend can be deployed to Render:
+The backend is deployed on Render:
 
-1. Create a new Web Service on Render
-2. Connect your GitHub repository
-3. Set root directory to `Agora-ecommerce-catalog/backend`
-4. Build command: `npm install && npm run build`
-5. Start command: `npm start`
-6. Add environment variables (database, JWT secrets, etc.)
+- **URL**: https://alx-project-nexus-1-fukx.onrender.com
+- **Root Directory**: `Agora-ecommerce-catalog/backend`
+- **Build Command**: `npm install && npm run build`
+- **Start Command**: `npm start`
+
+Required environment variables:
+- `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
+- `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`
+- `FRONTEND_URL` (for CORS)
 
 ---
 
