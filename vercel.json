@@ -2,7 +2,7 @@
   "version": 2,
   "buildCommand": "cd Agora-ecommerce-catalog/frontend && npm run build",
   "outputDirectory": "Agora-ecommerce-catalog/frontend/dist",
-  "installCommand": "cd Agora-ecommerce-catalog/frontend && npm install",
+  "installCommand": "cd Agora-ecommerce-catalog/frontend && npm install --legacy-peer-deps",
   "framework": "vite",
   "rewrites": [
     {
@@ -11,4 +11,3 @@
     }
   ]
 }
-
