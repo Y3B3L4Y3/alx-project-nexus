@@ -32,7 +32,7 @@ export const testConnection = async (): Promise<boolean> => {
 
 // Execute query helper
 export const query = async <T>(sql: string, params?: unknown[]): Promise<T> => {
-  const [rows] = await pool.execute(sql, params);
+  const [rows] = await pool.query(sql, params);
   return rows as T;
 };
 
